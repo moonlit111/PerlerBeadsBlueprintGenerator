@@ -814,53 +814,37 @@ class PerlerBeadApp {
         const scrollRect = this.canvasScroll.getBoundingClientRect();
         
         const style = getComputedStyle(this.mainCanvas);
-        const borderLeft = parseFloat(style.borderLeftWidth) || 0;
-        const borderTop = parseFloat(style.borderTopWidth) || 0;
-        const borderRight = parseFloat(style.borderRightWidth) || 0;
-        const borderBottom = parseFloat(style.borderBottomWidth) || 0;
+        // Visual border width needs to account for zoom
+        const borderLeft = (parseFloat(style.borderLeftWidth) || 0) * this.zoomLevel;
+        const borderTop = (parseFloat(style.borderTopWidth) || 0) * this.zoomLevel;
 
-        // 计算实际的显示比例（考虑到 CSS 限制等因素）
-        const contentWidth = canvasRect.width - borderLeft - borderRight;
-        const contentHeight = canvasRect.height - borderTop - borderBottom;
-        
-        // 避免除以0
-        const scaleX = this.mainCanvas.width > 0 ? contentWidth / this.mainCanvas.width : this.zoomLevel;
-        const scaleY = this.mainCanvas.height > 0 ? contentHeight / this.mainCanvas.height : this.zoomLevel;
-        
         // Canvas 内容区域（排除 border）相对于 scroll 容器的偏移
         // 注意：canvasScroll 是 relative 定位，所以 left/top 是相对于它的 padding box
+        // rect.left 是包含 border 的可视左边界
         const contentLeft = canvasRect.left + borderLeft - scrollRect.left + this.canvasScroll.scrollLeft;
         const contentTop = canvasRect.top + borderTop - scrollRect.top + this.canvasScroll.scrollTop;
+        
+        // Use zoomLevel directly for scaling to avoid rounding errors from rect size
+        const scale = this.zoomLevel;
         
         const { x, y, width, height } = this.nineGridState;
         
         this.selectionBox.style.display = 'block';
-        this.selectionBox.style.left = (contentLeft + x * scaleX) + 'px';
-        this.selectionBox.style.top = (contentTop + y * scaleY) + 'px';
-        this.selectionBox.style.width = (width * scaleX) + 'px';
-        this.selectionBox.style.height = (height * scaleY) + 'px';
+        this.selectionBox.style.left = (contentLeft + x * scale) + 'px';
+        this.selectionBox.style.top = (contentTop + y * scale) + 'px';
+        this.selectionBox.style.width = (width * scale) + 'px';
+        this.selectionBox.style.height = (height * scale) + 'px';
     }
 
     onNineGridDrag(e) {
         if (!this.nineGridDrag || (!this.isSelectingGrid && !this.isCropping)) return;
         const { mode, startClientX, startClientY, startState } = this.nineGridDrag;
         
-        // 计算实际缩放比例
-        const canvasRect = this.mainCanvas.getBoundingClientRect();
-        const style = getComputedStyle(this.mainCanvas);
-        const borderLeft = parseFloat(style.borderLeftWidth) || 0;
-        const borderRight = parseFloat(style.borderRightWidth) || 0;
-        const borderTop = parseFloat(style.borderTopWidth) || 0;
-        const borderBottom = parseFloat(style.borderBottomWidth) || 0;
-        
-        const contentWidth = canvasRect.width - borderLeft - borderRight;
-        const contentHeight = canvasRect.height - borderTop - borderBottom;
-        
-        const scaleX = this.mainCanvas.width > 0 ? contentWidth / this.mainCanvas.width : this.zoomLevel;
-        const scaleY = this.mainCanvas.height > 0 ? contentHeight / this.mainCanvas.height : this.zoomLevel;
+        // Use zoomLevel directly for scaling to ensure consistent coordinate mapping
+        const scale = this.zoomLevel;
 
-        const dxCanvas = (e.clientX - startClientX) / scaleX;
-        const dyCanvas = (e.clientY - startClientY) / scaleY;
+        const dxCanvas = (e.clientX - startClientX) / scale;
+        const dyCanvas = (e.clientY - startClientY) / scale;
         let { x, y, width, height } = startState;
 
         const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
@@ -876,6 +860,7 @@ class PerlerBeadApp {
                 x = newX;
             }
             if (mode.includes('r')) {
+                // Ensure max width allows reaching the right edge
                 width = clamp(width + dxCanvas, minSize, this.mainCanvas.width - x);
             }
             if (mode.includes('t')) {
@@ -884,6 +869,7 @@ class PerlerBeadApp {
                 y = newY;
             }
             if (mode.includes('b')) {
+                // Ensure max height allows reaching the bottom edge
                 height = clamp(height + dyCanvas, minSize, this.mainCanvas.height - y);
             }
         }
@@ -1425,10 +1411,13 @@ class PerlerBeadApp {
     }
 
     startPan(e) {
+        // Allow pan if tool is pan, OR if middle button, OR if in selection/crop mode (and didn't hit a handle)
         const isPanTool = this.selectedTool === 'pan';
         const isMiddleButton = e.button === 1;
-        if (!isPanTool && !isMiddleButton) return false;
-        // 移除 zoomLevel <= 1 的限制，允许在任何缩放级别下拖动
+        const isSelectionMode = this.isSelectingGrid || this.isCropping;
+        
+        if (!isPanTool && !isMiddleButton && !isSelectionMode) return false;
+        
         this.isPanning = true;
         this.canvasScroll.style.cursor = 'grabbing';
         this.panStart = {
@@ -1557,7 +1546,11 @@ class PerlerBeadApp {
 
     // 画布交互
     onCanvasMouseDown(e) {
-        if (this.isSelectingGrid) return;
+        if (this.isSelectingGrid || this.isCropping) {
+            // Attempt to pan first (if not blocked by selection box stopPropagation)
+            this.startPan(e);
+            return;
+        }
         if (this.selectedTool === 'pan' || e.button === 1) {
             if (this.startPan(e)) return;
             // 拖动工具下即便无法拖动也不进入绘制
@@ -2644,6 +2637,9 @@ class PerlerBeadApp {
             this.endGridSelection();
         }
         this.isSelectingGrid = true;
+        // Reset state to avoid flickering or inheriting old/wrong shapes
+        this.nineGridState = { x: 0, y: 0, width: 0, height: 0 };
+        
         if (this.selectGridBtn) this.selectGridBtn.classList.add('active');
         this.canvasScroll.classList.add('selecting-mode');
         this.mainCanvas.style.cursor = 'crosshair';
