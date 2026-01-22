@@ -30,10 +30,6 @@ class PerlerBeadApp {
         this.isAdjustingContrast = false;
         this.contrastValue = 0;
         
-        // Workspace state
-        this.currentWorkspace = 'generation'; // 'generation' or 'editing'
-        this.isCompareMode = false;
-
         this.initElements();
         this.initNineGridOverlay();
         this.initEventListeners();
@@ -42,9 +38,6 @@ class PerlerBeadApp {
         this.initAllColorsPalette();
         this.initCollapsibles();
         this.initScrollAnimations();
-        
-        // Initialize workspace UI
-        this.switchWorkspace('generation');
     }
 
     initScrollAnimations() {
@@ -118,18 +111,6 @@ class PerlerBeadApp {
         this.ctx = this.mainCanvas.getContext('2d');
         this.canvasScroll = document.getElementById('canvasScroll');
         this.toolsSection = document.getElementById('toolsSection');
-        
-        // Workspace Elements
-        this.workspaceTabs = document.querySelectorAll('.ws-tab');
-        this.genSidebarContent = document.getElementById('gen-sidebar-content');
-        this.editSidebarContent = document.getElementById('edit-sidebar-content');
-        this.genToolbar = document.getElementById('genToolbar');
-        this.editToolbar = document.getElementById('editToolbar');
-        this.toggleCompareBtn = document.getElementById('toggleCompareBtn');
-        this.toggleCompareBtnSidebar = document.getElementById('toggleCompareBtnSidebar');
-        this.sendToEditBtn = document.getElementById('sendToEditBtn');
-        this.sendToEditBtnSidebar = document.getElementById('sendToEditBtnSidebar');
-
         this.lockGridRatioBtn = document.getElementById('lockGridRatioBtn');
         this.selectGridBtn = document.getElementById('selectGridBtn');
         this.selectionBox = document.getElementById('selectionBox');
@@ -138,7 +119,6 @@ class PerlerBeadApp {
         // 调色板
         this.paletteUsed = document.getElementById('paletteUsed');
         this.paletteAll = document.getElementById('paletteAll');
-        this.paletteStats = document.getElementById('paletteStats');
         this.colorStats = document.getElementById('colorStats');
         this.allColorsGrid = document.getElementById('allColorsGrid');
         
@@ -194,21 +174,6 @@ class PerlerBeadApp {
             if (el) el.addEventListener('change', handler);
         };
 
-        // Workspace Tabs
-        this.workspaceTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const ws = tab.dataset.ws;
-                this.switchWorkspace(ws);
-            });
-        });
-
-        // Gen Actions
-        bindClick('toggleCompareBtn', () => this.toggleCompare());
-        bindClick('toggleCompareBtnSidebar', () => this.toggleCompare());
-        bindClick('sendToEditBtn', () => this.sendToEdit());
-        bindClick('sendToEditBtnSidebar', () => this.sendToEdit());
-        bindClick('selectColorsBtnTop', () => this.showColorSelectModal());
-
         // 上传按钮
         bindClick('uploadBtn', () => this.imageInput.click());
         bindClick('uploadBtnLarge', () => this.imageInput.click());
@@ -227,7 +192,7 @@ class PerlerBeadApp {
         bindClick('redoBtn', () => this.redo());
         bindClick('exportBtn', () => this.showExportModal());
         bindClick('clearBtn', () => this.clearCanvas());
-        // bindClick('selectColorsBtn', () => this.showColorSelectModal());
+        bindClick('selectColorsBtn', () => this.showColorSelectModal());
         bindClick('themeToggle', () => this.toggleTheme());
         
         // 图片处理按钮
@@ -253,10 +218,7 @@ class PerlerBeadApp {
         // 工具选择
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                // 只有带有 data-tool 属性的才是真正的工具按钮
-                if (!btn.dataset.tool) return;
-                
-                document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.selectedTool = btn.dataset.tool;
                 this.updateCursor();
@@ -282,47 +244,12 @@ class PerlerBeadApp {
             return { rangeEl, numberEl };
         };
 
-        const offsetHighPrecision = document.getElementById('offsetHighPrecision');
-        
-        // 先定义锁定函数，以便在 bindRangeAndNumber 回调中使用
-        const applyLockFromWidth = () => {
-            if (!this.lockGridRatio) return;
-            const widthInput = document.getElementById('gridCols');
-            if (!widthInput) return;
-            const widthVal = parseFloat(widthInput.value);
-            if (!isFinite(widthVal) || widthVal <= 0 || this.gridRatio === 0) return;
-            const newHeight = widthVal / this.gridRatio;
-            const rowsInput = document.getElementById('gridRows');
-            const rowsNumInput = document.getElementById('gridRowsInput');
-            if (rowsInput) rowsInput.value = newHeight.toFixed(2);
-            if (rowsNumInput) rowsNumInput.value = newHeight.toFixed(2);
-        };
-
-        const applyLockFromHeight = () => {
-            if (!this.lockGridRatio) return;
-            const heightInput = document.getElementById('gridRows');
-            if (!heightInput) return;
-            const heightVal = parseFloat(heightInput.value);
-            if (!isFinite(heightVal) || heightVal <= 0) return;
-            const newWidth = heightVal * this.gridRatio;
-            const colsInput = document.getElementById('gridCols');
-            const colsNumInput = document.getElementById('gridColsInput');
-            if (colsInput) colsInput.value = newWidth.toFixed(2);
-            if (colsNumInput) colsNumInput.value = newWidth.toFixed(2);
-        };
-
-        // 绑定控件并传入包含锁定逻辑的回调
-        const gridColsControls = bindRangeAndNumber('gridCols', 'gridColsInput', () => {
-            applyLockFromWidth();
-            this.updateGridManual();
-        });
-        const gridRowsControls = bindRangeAndNumber('gridRows', 'gridRowsInput', () => {
-            applyLockFromHeight();
-            this.updateGridManual();
-        });
+        const gridColsControls = bindRangeAndNumber('gridCols', 'gridColsInput', () => this.updateGridManual());
+        const gridRowsControls = bindRangeAndNumber('gridRows', 'gridRowsInput', () => this.updateGridManual());
         const gridOffsetXControls = bindRangeAndNumber('gridOffsetX', 'gridOffsetXInput', () => this.updateGridManual());
         const gridOffsetYControls = bindRangeAndNumber('gridOffsetY', 'gridOffsetYInput', () => this.updateGridManual());
 
+        const offsetHighPrecision = document.getElementById('offsetHighPrecision');
         const setOffsetBounds = (controls, min, max) => {
             if (!controls) return;
             const clamp = (v) => Math.min(max, Math.max(min, parseFloat(v) || 0));
@@ -352,6 +279,44 @@ class PerlerBeadApp {
         if (offsetHighPrecision) {
             offsetHighPrecision.addEventListener('change', applyOffsetStep);
         }
+
+        const applyLockFromWidth = () => {
+            if (!this.lockGridRatio) return;
+            const widthInput = document.getElementById('gridCols');
+            if (!widthInput) return;
+            const widthVal = parseFloat(widthInput.value);
+            if (!isFinite(widthVal) || widthVal <= 0 || this.gridRatio === 0) return;
+            const newHeight = widthVal / this.gridRatio;
+            const rowsInput = document.getElementById('gridRows');
+            const rowsNumInput = document.getElementById('gridRowsInput');
+            if (rowsInput) rowsInput.value = newHeight.toFixed(2);
+            if (rowsNumInput) rowsNumInput.value = newHeight.toFixed(2);
+        };
+
+        const applyLockFromHeight = () => {
+            if (!this.lockGridRatio) return;
+            const heightInput = document.getElementById('gridRows');
+            if (!heightInput) return;
+            const heightVal = parseFloat(heightInput.value);
+            if (!isFinite(heightVal) || heightVal <= 0) return;
+            const newWidth = heightVal * this.gridRatio;
+            const colsInput = document.getElementById('gridCols');
+            const colsNumInput = document.getElementById('gridColsInput');
+            if (colsInput) colsInput.value = newWidth.toFixed(2);
+            if (colsNumInput) colsNumInput.value = newWidth.toFixed(2);
+        };
+
+        if (gridColsControls) {
+            gridColsControls.rangeEl.addEventListener('input', applyLockFromWidth);
+            gridColsControls.numberEl.addEventListener('input', applyLockFromWidth);
+        }
+        if (gridRowsControls) {
+            gridRowsControls.rangeEl.addEventListener('input', applyLockFromHeight);
+            gridRowsControls.numberEl.addEventListener('input', applyLockFromHeight);
+        }
+        
+        // 自动网格划分
+        bindClick('autoGridBtn', () => this.autoCalculateGrid());
 
         // 框选网格
         bindClick('selectGridBtn', () => {
@@ -385,56 +350,26 @@ class PerlerBeadApp {
                 this.endGridSelection();
                 return;
             }
-            // 允许在输入框中输入
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-            if (!this.uploadedImage) return;
-            
-            // 偏移快捷键 (需要按住 Ctrl/Cmd 或者是方向键直接生效？原逻辑是 !e.ctrlKey return，意味着必须按 Ctrl)
-            // 但方向键通常用于微调，可能不需要 Ctrl? 
-            // 原代码：if (!e.ctrlKey || !this.uploadedImage) return;
-            // 我们修改为：方向键需要 Ctrl (为了避免滚动冲突)，W/A/S/D 不需要 (或者也需要?)
-            // 用户习惯：通常 WASD 移动视角/对象，方向键也是。
-            // 这里原逻辑是偏移需要 Ctrl。我们保持偏移需要 Ctrl，或者根据用户需求调整。
-            // 用户只说备注快捷键，没说改逻辑。
-            // 但 W/S 调整宽度通常不需要 Ctrl。
-            
-            const isCtrl = e.ctrlKey || e.metaKey;
+            if (!e.ctrlKey || !this.uploadedImage) return;
+            if (!gridOffsetXControls || !gridOffsetYControls) return;
 
             const offsetDelta = () => {
                 const high = offsetHighPrecision && offsetHighPrecision.checked;
-                return high ? 0.05 : 0.5;
+                return high ? 0.005 : 0.05;
             };
 
             const adjust = (controls, delta) => {
-                if (!controls) return;
                 const next = Math.min(parseFloat(controls.rangeEl.max), Math.max(parseFloat(controls.rangeEl.min), parseFloat(controls.rangeEl.value) + delta));
                 controls.rangeEl.value = next;
                 controls.numberEl.value = next;
-                controls.rangeEl.dispatchEvent(new Event('input')); // 触发联动
+                this.updateGridManual();
             };
 
-            // 偏移 (保持原逻辑，需要 Ctrl)
-            if (isCtrl && gridOffsetXControls && gridOffsetYControls) {
-                switch(e.key) {
-                    case 'ArrowUp': e.preventDefault(); adjust(gridOffsetYControls, -offsetDelta()); return;
-                    case 'ArrowDown': e.preventDefault(); adjust(gridOffsetYControls, offsetDelta()); return;
-                    case 'ArrowLeft': e.preventDefault(); adjust(gridOffsetXControls, -offsetDelta()); return;
-                    case 'ArrowRight': e.preventDefault(); adjust(gridOffsetXControls, offsetDelta()); return;
-                }
-            }
-
-            // 网格宽高 (W/S/A/D) - 不需要 Ctrl
-            if (gridColsControls && gridRowsControls) {
-                const sizeDelta = 0.2; // 每次调整 0.2px
-                switch(e.key.toLowerCase()) {
-                    // A/D 控制宽度 (横向)
-                    case 'a': adjust(gridColsControls, -sizeDelta); break;
-                    case 'd': adjust(gridColsControls, sizeDelta); break;
-                    // W/S 控制高度 (纵向)
-                    case 'w': adjust(gridRowsControls, sizeDelta); break;
-                    case 's': adjust(gridRowsControls, -sizeDelta); break;
-                }
+            switch(e.key) {
+                case 'ArrowUp': e.preventDefault(); adjust(gridOffsetYControls, -offsetDelta()); break;
+                case 'ArrowDown': e.preventDefault(); adjust(gridOffsetYControls, offsetDelta()); break;
+                case 'ArrowLeft': e.preventDefault(); adjust(gridOffsetXControls, -offsetDelta()); break;
+                case 'ArrowRight': e.preventDefault(); adjust(gridOffsetXControls, offsetDelta()); break;
             }
         });
         
@@ -507,7 +442,6 @@ class PerlerBeadApp {
                 const tabType = tab.dataset.tab;
                 if (this.paletteUsed) this.paletteUsed.style.display = tabType === 'used' ? 'block' : 'none';
                 if (this.paletteAll) this.paletteAll.style.display = tabType === 'all' ? 'block' : 'none';
-                if (this.paletteStats) this.paletteStats.style.display = tabType === 'stats' ? 'block' : 'none';
             });
         });
         
@@ -621,91 +555,6 @@ class PerlerBeadApp {
         }
 
         bindClick('mergeColorsBtn', () => this.mergeSimilarColors());
-        bindClick('removeBgBtn', () => this.removeBackground());
-    }
-
-    // 移除背景功能
-    removeBackground() {
-        if (!this.isGenerated || !this.colorGrid.length) {
-            this.showToast('请先生成图纸', 'info');
-            return;
-        }
-        
-        const rows = this.colorGrid.length;
-        const cols = this.colorGrid[0].length;
-        const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
-        const queue = [];
-        
-        // 定义背景色号 (透明、白色等)
-        // T1: 白色, H1: 透明, H2: 白色
-        const BACKGROUND_COLOR_KEYS = ['T1', 'H1', 'H2']; 
-
-        // 辅助函数：检查并添加种子
-        const checkAndAddSeed = (r, c) => {
-            if (visited[r][c]) return;
-            const cell = this.colorGrid[r][c];
-            // 必须是背景色之一才作为种子
-            if (cell && cell.color && BACKGROUND_COLOR_KEYS.includes(cell.color.id)) {
-                visited[r][c] = true;
-                queue.push([r, c]);
-            }
-        };
-
-        // 1. 扫描边界，寻找种子
-        // Top & Bottom
-        for (let c = 0; c < cols; c++) {
-            checkAndAddSeed(0, c);
-            checkAndAddSeed(rows - 1, c);
-        }
-        // Left & Right
-        for (let r = 0; r < rows; r++) {
-            checkAndAddSeed(r, 0);
-            checkAndAddSeed(r, cols - 1);
-        }
-
-        if (queue.length === 0) {
-            this.showToast('边缘未检测到预设背景色(T1/H1)', 'info');
-            return;
-        }
-
-        // 2. 洪水填充
-        let removedCount = 0;
-        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-
-        while (queue.length > 0) {
-            const [r, c] = queue.shift();
-            const cell = this.colorGrid[r][c];
-            
-            // 标记并移除
-            if (!cell.isExternal) {
-                cell.isExternal = true;
-                cell.color = null; // 视觉上移除
-                removedCount++;
-            }
-
-            // 检查邻居
-            for (const [dr, dc] of directions) {
-                const nr = r + dr;
-                const nc = c + dc;
-
-                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc]) {
-                    const neighbor = this.colorGrid[nr][nc];
-                    // 只有颜色也在背景色列表中，才继续蔓延
-                    if (neighbor && neighbor.color && BACKGROUND_COLOR_KEYS.includes(neighbor.color.id)) {
-                        visited[nr][nc] = true;
-                        queue.push([nr, nc]);
-                    }
-                }
-            }
-        }
-
-        if (removedCount > 0) {
-            this.saveState();
-            this.redrawCanvas();
-            this.showToast(`已移除 ${removedCount} 个背景格子`, 'success');
-        } else {
-            this.showToast('未找到可移除的背景区域', 'info');
-        }
     }
 
     // 主题切换
@@ -834,14 +683,6 @@ class PerlerBeadApp {
     initCanvasWithImage() {
         // 获取画布容器的实际可用空间
         const canvasScroll = document.getElementById('canvasScroll');
-        // 增加 dpr 支持以确保高分屏清晰度，并做好兜底
-        const dpr = window.devicePixelRatio || 1;
-        let containerW = canvasScroll ? canvasScroll.clientWidth : window.innerWidth;
-        let containerH = canvasScroll ? canvasScroll.clientHeight : window.innerHeight;
-        
-        if (containerW <= 0) containerW = window.innerWidth;
-        if (containerH <= 0) containerH = window.innerHeight;
-
         // 使用固定的合理最大尺寸，避免容器尺寸计算问题
         const maxCanvasWidth = 4096;
         const maxCanvasHeight = 4096;
@@ -849,26 +690,7 @@ class PerlerBeadApp {
         let width = this.uploadedImage.width;
         let height = this.uploadedImage.height;
         
-        // 自动调整尺寸逻辑：
-        // 1. 如果图片过大，缩小以适应最大限制
-        // 2. 如果图片过小，放大以填满屏幕（用户需求：默认图片能占满整个画框）
-        
-        // 计算目标尺寸（考虑 dpr 的物理像素）
-        const targetW = containerW * dpr;
-        const targetH = containerH * dpr;
-        
-        // 计算填满容器所需的比例 (Contain模式)
-        const scaleW = targetW / width;
-        const scaleH = targetH / height;
-        const fitScale = Math.min(scaleW, scaleH);
-        
-        // 如果图片小于目标尺寸（需要放大），则应用放大比例
-        if (fitScale > 1) {
-            width = Math.round(width * fitScale);
-            height = Math.round(height * fitScale);
-        }
-        
-        // 再次检查并应用最大尺寸限制
+        // 如果图片太大，按比例缩小（仅在超出安全上限时）
         if (width > maxCanvasWidth || height > maxCanvasHeight) {
             const ratio = Math.min(maxCanvasWidth / width, maxCanvasHeight / height);
             width = Math.round(width * ratio);
@@ -890,10 +712,7 @@ class PerlerBeadApp {
         this.autoCalculateGrid();
 
         // 自动适配图片到视图
-        // 使用 setTimeout 确保 DOM 更新及容器尺寸计算正确
-        setTimeout(() => {
-            this.fitImageToView();
-        }, 50);
+        this.fitImageToView();
     }
 
     getMaxZoom() {
@@ -908,21 +727,21 @@ class PerlerBeadApp {
         const ratioH = containerH / this.mainCanvas.height;
         const fitRatio = Math.max(ratioW, ratioH);
 
-        // 允许放大到至少能填满屏幕的 5 倍，或者固定的 20 倍（取大者）
-        // 同时限制最大像素尺寸
-        const maxPixelDimension = 30000;
+        // 允许放大到至少能填满屏幕的 5 倍，或者固定的 10 倍（取大者）
+        // 同时限制最大像素尺寸，防止浏览器崩溃（一般限制在 30000px 左右）
+        const maxPixelDimension = 20000;
         const currentMaxDim = Math.max(this.mainCanvas.width, this.mainCanvas.height);
         const maxSafeZoom = maxPixelDimension / currentMaxDim;
 
-        return Math.min(maxSafeZoom, Math.max(20, fitRatio * 2));
+        return Math.min(maxSafeZoom, Math.max(10, fitRatio * 5));
     }
 
     fitImageToView() {
         if (!this.mainCanvas || !this.canvasScroll) return;
 
-        // 获取容器尺寸（移除内边距以填满屏幕）
-        const containerWidth = this.canvasScroll.clientWidth;
-        const containerHeight = this.canvasScroll.clientHeight;
+        // 获取容器尺寸（减去一些内边距以保持美观）
+        const containerWidth = this.canvasScroll.clientWidth - 40;
+        const containerHeight = this.canvasScroll.clientHeight - 40;
         
         if (containerWidth <= 0 || containerHeight <= 0) return;
 
@@ -935,14 +754,12 @@ class PerlerBeadApp {
         const scaleX = containerWidth / contentWidth;
         const scaleY = containerHeight / contentHeight;
         
-        // 取较小的比例以确保图片完全显示 (contain)
+        // 取较小的比例以确保图片完全显示
         let newZoom = Math.min(scaleX, scaleY);
         
-        // 用户需求：默认占满整个画框，移除所有边距限制，实现 100% 贴边
-        // 之前尝试过 0.98，但用户希望“最大”，所以改为完全不缩小
-        
-        // 限制最小缩放
-        newZoom = Math.max(0.01, Math.min(this.getMaxZoom(), newZoom));
+        // 限制最小缩放为 0.1，最大不超过计算出的最大缩放比例
+        // 移除原来 Math.min(1, ...) 的限制，允许小图放大以适应屏幕
+        newZoom = Math.max(0.1, Math.min(this.getMaxZoom(), newZoom));
         
         // 应用缩放和重置位移
         this.zoomLevel = newZoom;
@@ -972,18 +789,6 @@ class PerlerBeadApp {
             this.colorGrid.push(rowData);
         }
         
-        // 重置对比模式状态
-        this.isCompareMode = false;
-        const updateCompareBtn = (btn) => {
-            if (btn) {
-                btn.classList.remove('active');
-                const span = btn.querySelector('span');
-                if (span) span.textContent = '对比原图/图纸';
-            }
-        };
-        updateCompareBtn(this.toggleCompareBtn);
-        updateCompareBtn(this.toggleCompareBtnSidebar);
-
         this.saveState();
         this.redrawCanvas();
     }
@@ -1338,89 +1143,6 @@ class PerlerBeadApp {
 
     updateContrastPreview() {
         this.redrawCanvas();
-    }
-
-    switchWorkspace(workspace) {
-        this.currentWorkspace = workspace;
-        
-        // Update Tabs
-        this.workspaceTabs.forEach(tab => {
-            if (tab.dataset.ws === workspace) {
-                tab.classList.add('active');
-            } else {
-                tab.classList.remove('active');
-            }
-        });
-
-        // Toggle UI Panels
-        if (workspace === 'generation') {
-            if (this.genSidebarContent) this.genSidebarContent.style.display = 'block';
-            if (this.editSidebarContent) this.editSidebarContent.style.display = 'none';
-            if (this.genToolbar) this.genToolbar.style.display = 'flex';
-            if (this.editToolbar) this.editToolbar.style.display = 'none';
-            
-            // Reset state for generation view
-            this.isCompareMode = false;
-            const updateCompareBtn = (btn) => {
-                if (btn) {
-                    btn.classList.remove('active');
-                    const span = btn.querySelector('span');
-                    if (span && !btn.classList.contains('tool-btn')) {
-                         span.textContent = '对比原图/图纸';
-                    }
-                }
-            };
-            updateCompareBtn(this.toggleCompareBtn);
-            updateCompareBtn(this.toggleCompareBtnSidebar);
-        } else {
-            if (this.genSidebarContent) this.genSidebarContent.style.display = 'none';
-            if (this.editSidebarContent) this.editSidebarContent.style.display = 'block';
-            if (this.genToolbar) this.genToolbar.style.display = 'none';
-            if (this.editToolbar) this.editToolbar.style.display = 'flex';
-            
-            // Auto analyze if needed when entering edit mode
-            if (!this.isGenerated && this.uploadedImage) {
-                this.analyzeColors();
-            }
-        }
-
-        this.redrawCanvas();
-    }
-
-    toggleCompare() {
-        if (!this.isGenerated) {
-            this.showToast('请先生成图纸', 'info');
-            return;
-        }
-        this.isCompareMode = !this.isCompareMode;
-        
-        const updateCompareBtn = (btn) => {
-            if (!btn) return;
-            if (this.isCompareMode) {
-                btn.classList.add('active');
-                const span = btn.querySelector('span');
-                if (span) span.textContent = '显示原图';
-            } else {
-                btn.classList.remove('active');
-                const span = btn.querySelector('span');
-                if (span) span.textContent = '对比原图/图纸';
-            }
-        };
-
-        updateCompareBtn(this.toggleCompareBtn);
-        updateCompareBtn(this.toggleCompareBtnSidebar);
-
-        this.redrawCanvas();
-    }
-
-    sendToEdit() {
-        if (!this.isGenerated) {
-            this.analyzeColors(); // Try to generate first
-        }
-        if (this.isGenerated) {
-            this.switchWorkspace('editing');
-            this.showToast('已切换到编辑模式', 'success');
-        }
     }
 
     autoCalculateGrid() {
@@ -1791,38 +1513,31 @@ class PerlerBeadApp {
     }
 
     redrawCanvas() {
-        if (!this.colorGrid.length && !this.uploadedImage) return;
+        if (!this.colorGrid.length) return;
         
-        const cols = this.colorGrid.length > 0 ? this.colorGrid[0].length : (this.gridData ? this.gridData.cols : 1);
-        const rows = this.colorGrid.length > 0 ? this.colorGrid.length : (this.gridData ? this.gridData.rows : 1);
+        const cols = this.colorGrid[0].length;
+        const rows = this.colorGrid.length;
         const { offsetX = 0, offsetY = 0, cellWidth: storedW, cellHeight: storedH } = this.gridData || {};
         const cellWidth = storedW || this.mainCanvas.width / cols;
         const cellHeight = storedH || this.mainCanvas.height / rows;
         
         this.ctx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
         
-        // Determine what to render
-        let showSourceImage = false;
-
-        if (this.currentWorkspace === 'generation') {
-            // In Generation mode:
-            // Show source if:
-            // 1. Not generated yet
-            // 2. Adjusting contrast
-            // 3. Not in compare mode (Compare mode = show result)
-            if (!this.isGenerated || this.isAdjustingContrast || !this.isCompareMode) {
-                showSourceImage = true;
-            }
-        } else {
-            // In Editing mode:
-            // Show result. Fallback to source if not generated.
-            if (!this.isGenerated) {
-                showSourceImage = true;
+        // 检查是否有任何颜色被分析过
+        let hasAnalyzedColors = false;
+        for (let row = 0; row < rows && !hasAnalyzedColors; row++) {
+            for (let col = 0; col < cols && !hasAnalyzedColors; col++) {
+                if (this.colorGrid[row][col].color) {
+                    hasAnalyzedColors = true;
+                }
             }
         }
+        
+        // 强制显示原图的情况：未分析，或正在调整对比度
+        const showSourceImage = (!hasAnalyzedColors && this.uploadedImage) || (this.isAdjustingContrast && this.uploadedImage);
 
         // 如果没有分析过颜色，显示原始图片
-        if (showSourceImage && this.uploadedImage) {
+        if (showSourceImage) {
             
             // 应用对比度滤镜
             if (this.isAdjustingContrast) {
@@ -1833,32 +1548,30 @@ class PerlerBeadApp {
             
             this.ctx.filter = 'none';
 
-            // 绘制网格线在图片上 (Generation Mode usually needs grid lines to see alignment)
-            // In Edit mode (fallback to source), maybe also show grid lines.
+            // 绘制网格线在图片上
             if (this.showGridLines) {
-                this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'; // Red lines for contrast on photo
-                this.ctx.lineWidth = 1;
-                
-                // Draw V lines
-                for (let col = 0; col <= cols; col++) {
-                    const x = offsetX + col * cellWidth;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x, 0);
-                    this.ctx.lineTo(x, this.mainCanvas.height);
-                    this.ctx.stroke();
-                }
-                
-                // Draw H lines
                 for (let row = 0; row <= rows; row++) {
                     const y = offsetY + row * cellHeight;
+                    this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                    this.ctx.lineWidth = 1;
                     this.ctx.beginPath();
                     this.ctx.moveTo(0, y);
                     this.ctx.lineTo(this.mainCanvas.width, y);
                     this.ctx.stroke();
                 }
+                
+                for (let col = 0; col <= cols; col++) {
+                    const x = offsetX + col * cellWidth;
+                    this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.mainCanvas.height);
+                    this.ctx.stroke();
+                }
             }
-        } else if (this.colorGrid.length > 0) {
-            // 绘制颜色单元格 (Pixel Art)
+        } else {
+            // 绘制颜色单元格
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     const cell = this.colorGrid[row][col];
@@ -1869,12 +1582,11 @@ class PerlerBeadApp {
                         this.ctx.fillStyle = cell.color.hex;
                         this.ctx.fillRect(x, y, cellWidth, cellHeight);
                     } else {
-                        // Empty/White
                         this.ctx.fillStyle = '#ffffff';
                         this.ctx.fillRect(x, y, cellWidth, cellHeight);
                     }
                     
-                    // 绘制网格线 (Subtle lines for pixel art)
+                    // 绘制网格线
                     if (this.showGridLines) {
                         this.ctx.strokeStyle = '#e0e0e0';
                         this.ctx.lineWidth = 0.5;
@@ -2085,32 +1797,13 @@ class PerlerBeadApp {
         // 保存原始颜色网格，供颜色合并时作为基线
         this.baseColorGrid = this.cloneColorGrid(this.colorGrid);
         if (this.editGuard) this.editGuard.style.display = 'none';
-        // const gridSettingsSection = document.getElementById('gridSettingsSection');
-        // if (gridSettingsSection) gridSettingsSection.style.display = 'none';
-        
-        // 隐藏框选网格的选框，但保持 isSelectingGrid 状态以便逻辑继续有效
-        if (this.selectionBox) {
-            this.selectionBox.style.display = 'none';
-        }
-
+        const gridSettingsSection = document.getElementById('gridSettingsSection');
+        if (gridSettingsSection) gridSettingsSection.style.display = 'none';
         this.saveState();
-
-        // 切换到对比模式（显示图纸）
-        this.isCompareMode = true;
-        const updateCompareBtn = (btn) => {
-            if (btn) {
-                btn.classList.add('active');
-                const span = btn.querySelector('span');
-                if (span) span.textContent = '显示原图';
-            }
-        };
-        updateCompareBtn(this.toggleCompareBtn);
-        updateCompareBtn(this.toggleCompareBtnSidebar);
-
         this.redrawCanvas();
         if (this.toolsSection) this.toolsSection.classList.remove('tool-locked');
-        // 保持框选模式，不自动退出
-        // if (this.isSelectingGrid) this.endGridSelection();
+        // 确保退出框选模式，恢复工具可用
+        if (this.isSelectingGrid) this.endGridSelection();
         this.updateCursor();
 
         // 分析完成后自动适配视图
@@ -2141,8 +1834,10 @@ class PerlerBeadApp {
         switch (this.colorMethod) {
             case 'average':
                 return this.getAverageColor(colors);
-            case 'dominant':
-                return this.getDominantColor(colors);
+            case 'median':
+                return this.getMedianColor(colors);
+            case 'center':
+                return colors[Math.floor(colors.length / 2)];
             default:
                 return this.getAverageColor(colors);
         }
@@ -2162,26 +1857,6 @@ class PerlerBeadApp {
         };
     }
 
-    getDominantColor(colors) {
-        if (!colors.length) return { r: 0, g: 0, b: 0 };
-        const colorCounts = new Map();
-        let maxCount = 0;
-        let dominant = colors[0];
-
-        colors.forEach(c => {
-            const key = `${c.r},${c.g},${c.b}`;
-            const count = (colorCounts.get(key) || 0) + 1;
-            colorCounts.set(key, count);
-            if (count > maxCount) {
-                maxCount = count;
-                dominant = c;
-            }
-        });
-        return dominant;
-    }
-
-    // 移除 getMedianColor 方法，因为不再需要
-    /*
     getMedianColor(colors) {
         const sortedR = colors.map(c => c.r).sort((a, b) => a - b);
         const sortedG = colors.map(c => c.g).sort((a, b) => a - b);
@@ -2194,7 +1869,6 @@ class PerlerBeadApp {
             b: sortedB[mid]
         };
     }
-    */
 
     // 调色板管理
     updateUsedColorsPalette() {
@@ -2266,36 +1940,14 @@ class PerlerBeadApp {
 
     initAllColorsPalette() {
         const allColors = window.getAllColors();
-        const selectedIds = window.getSelectedColorIds();
         const system = this.colorSystem;
 
-        // 1. 过滤：只显示用户在“选择颜色”中勾选的颜色
-        // 如果没有选择任何颜色（初始状态可能为空），显示所有或者根据逻辑决定
-        // 按照逻辑 findClosestColors，如果为空是显示所有。但这里为了“同步”，应该为空就显示空或提示去选择。
-        // 为了用户体验，如果 selectedIds 为空，我们假设全选了（或者提示去选择）。
-        // 实际上 loadSelectedColors 会在为空时默认全选。所以这里 selectedIds 应该不为空。
-        
-        let displayColors = allColors.filter(c => selectedIds.has(c.id));
-        
-        // 如果过滤后为空（异常情况），显示所有
-        if (displayColors.length === 0) {
-            displayColors = allColors;
-        }
-
-        // 2. 排序：按字母分组，同一首字母在一起，然后按数字排序
-        const sortedAllColors = displayColors.sort((a, b) => {
+        // 对所有颜色进行排序
+        const sortedAllColors = [...allColors].sort((a, b) => {
             const idA = window.getDisplayId(a, system);
             const idB = window.getDisplayId(b, system);
             
-            // 提取字母部分作为分组依据
-            const groupA = idA.replace(/[^A-Za-z\u4e00-\u9fa5]/g, ''); // 保留字母和汉字
-            const groupB = idB.replace(/[^A-Za-z\u4e00-\u9fa5]/g, '');
-            
-            if (groupA !== groupB) {
-                return groupA.localeCompare(groupB);
-            }
-            
-            // 同组内按数字排序
+            // 尝试提取数字部分进行比较
             const numA = parseInt(idA.replace(/\D/g, '')) || 0;
             const numB = parseInt(idB.replace(/\D/g, '')) || 0;
             
@@ -2304,18 +1956,12 @@ class PerlerBeadApp {
         });
         
         let html = '';
-        // 3. 渲染：为了体现“分组”，我们在网格中直接排列，但由于已排序，同组颜色会自然聚集
-        // 如果需要显式分组标题，会破坏 grid 布局。这里先只做排序。
-        
         sortedAllColors.forEach(color => {
             const displayId = window.getDisplayId(color, system);
             if (!displayId) return;
             
-            // 检查是否被选中（当前画笔颜色）
-            const isSelected = this.selectedColor && this.selectedColor.id === color.id;
-            
             html += `
-                <div class="color-swatch ${isSelected ? 'selected' : ''}" 
+                <div class="color-swatch" 
                      style="background-color: ${color.hex}"
                      data-color-id="${color.id}"
                      title="${displayId}">
@@ -2323,10 +1969,6 @@ class PerlerBeadApp {
                 </div>
             `;
         });
-        
-        if (sortedAllColors.length === 0) {
-            html = '<div class="empty-state"><p>未选择任何颜色</p></div>';
-        }
         
         this.allColorsGrid.innerHTML = html;
         
@@ -2401,7 +2043,7 @@ class PerlerBeadApp {
                 const count = new Map();
 
                 while (queue.length) {
-                    const [cr, cc] = queue.shift(); // BFS use shift, DFS use pop
+                    const [cr, cc] = queue.pop();
                     if (visited[cr][cc]) continue;
                     visited[cr][cc] = true;
 
@@ -2777,8 +2419,8 @@ class PerlerBeadApp {
 
             this.drawRoundedRect(ctx, cardX, cardY, cardW, cardH, Math.round(10 * scale), bg, stroke);
 
-            // 色块 - 增大统计颜色块
-            const swatchSize = Math.max(32, Math.round(48 * scale));
+            // 色块
+            const swatchSize = Math.max(24, Math.round(32 * scale));
             const swatchX = cardX + Math.max(10, Math.round(12 * scale));
             const swatchY = cardY + Math.max(10, Math.round(12 * scale));
             ctx.fillStyle = item.color.hex;
@@ -3135,7 +2777,9 @@ class PerlerBeadApp {
     // 移动端交互适配
     initMobileInteractions() {
         const leftPanel = document.querySelector('.left-panel');
+        const rightPanel = document.querySelector('.right-panel');
         const toggleLeft = document.getElementById('toggleLeftPanel');
+        const toggleRight = document.getElementById('toggleRightPanel');
         
         // 创建遮罩层
         let overlay = document.querySelector('.panel-overlay');
@@ -3146,14 +2790,29 @@ class PerlerBeadApp {
         }
         
         const togglePanel = (panel, show) => {
+            // 关闭所有其他面板
+            if (show) {
+                if (panel !== leftPanel) {
+                    leftPanel.classList.remove('show');
+                    if (toggleLeft) toggleLeft.classList.remove('active');
+                }
+                if (panel !== rightPanel) {
+                    rightPanel.classList.remove('show');
+                    if (toggleRight) toggleRight.classList.remove('active');
+                }
+            }
+            
             panel.classList.toggle('show', show);
             
             // 更新按钮状态
             if (panel === leftPanel && toggleLeft) {
                 toggleLeft.classList.toggle('active', show);
             }
+            if (panel === rightPanel && toggleRight) {
+                toggleRight.classList.toggle('active', show);
+            }
 
-            const anyVisible = leftPanel.classList.contains('show');
+            const anyVisible = leftPanel.classList.contains('show') || rightPanel.classList.contains('show');
             overlay.classList.toggle('show', anyVisible);
         };
         
@@ -3167,9 +2826,18 @@ class PerlerBeadApp {
             toggleLeft.disabled = false;
         }
         
+        if (toggleRight) {
+            toggleRight.addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePanel(rightPanel, !rightPanel.classList.contains('show'));
+            });
+            toggleRight.disabled = false;
+        }
+        
         // 点击遮罩层关闭面板
         overlay.addEventListener('click', () => {
             togglePanel(leftPanel, false);
+            togglePanel(rightPanel, false);
         });
         
         // 监听屏幕方向变化，调整布局
@@ -3183,12 +2851,16 @@ class PerlerBeadApp {
 
     closeMobileMenus() {
         const leftPanel = document.querySelector('.left-panel');
+        const rightPanel = document.querySelector('.right-panel');
         const overlay = document.querySelector('.panel-overlay');
         const toggleLeft = document.getElementById('toggleLeftPanel');
+        const toggleRight = document.getElementById('toggleRightPanel');
 
         if (leftPanel) leftPanel.classList.remove('show');
+        if (rightPanel) rightPanel.classList.remove('show');
         if (overlay) overlay.classList.remove('show');
         if (toggleLeft) toggleLeft.classList.remove('active');
+        if (toggleRight) toggleRight.classList.remove('active');
     }
 
     // 消息提示
