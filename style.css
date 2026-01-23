@@ -750,10 +750,6 @@ body {
     margin: 0 8px;
 }
 
-.tool-locked {
-    display: none;
-}
-
 .toolbar-select {
     position: relative;
     padding: 0 12px;
@@ -1692,11 +1688,6 @@ body.dark-mode .grid-overlay .grid-line {
     box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.35), inset 0 0 0 1px rgba(255, 77, 79, 0.25), 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
 
-.overlay-mask {
-    /* 移除 overlay-mask，改用 selection-box 的 box-shadow 实现 */
-    display: none !important;
-}
-
 .selection-box .drag-surface {
     position: absolute;
     inset: 0;
@@ -1708,12 +1699,6 @@ body.dark-mode .grid-overlay .grid-line {
     background: rgba(255, 77, 79, 0.75);
     pointer-events: none;
 }
-/* 
-.selection-box .grid-line.v1 { left: 33.333%; top: 0; width: 1.5px; height: 100%; }
-.selection-box .grid-line.v2 { left: 66.666%; top: 0; width: 1.5px; height: 100%; }
-.selection-box .grid-line.h1 { top: 33.333%; left: 0; height: 1.5px; width: 100%; }
-.selection-box .grid-line.h2 { top: 66.666%; left: 0; height: 1.5px; width: 100%; } 
-*/
 
 .selection-box .handle {
     position: absolute;
@@ -2979,10 +2964,6 @@ body.dark-mode .grid-overlay .grid-line {
 
 .toast-success {
     border-left: 4px solid #22c55e;
-}
-
-.toast-error {
-    border-left: 4px solid #ef4444;
 }
 
 /* 颜色识别样式 */

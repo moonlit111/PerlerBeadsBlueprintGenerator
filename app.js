@@ -134,7 +134,6 @@ class PerlerBeadApp {
         this.lockGridRatioBtn = document.getElementById('lockGridRatioBtn');
         this.selectGridBtn = document.getElementById('selectGridBtn');
         this.selectionBox = document.getElementById('selectionBox');
-        this.overlayMask = document.getElementById('overlayMask');
         this.gridOverlay = document.getElementById('gridOverlay');
         this.nineGridHandles = this.selectionBox ? this.selectionBox.querySelectorAll('[data-handle]') : [];
         
@@ -146,7 +145,6 @@ class PerlerBeadApp {
         this.allColorsGrid = document.getElementById('allColorsGrid');
         
         // 模态框
-        this.settingsModal = null; // 已移除
         this.colorSelectModal = document.getElementById('colorSelectModal');
         this.colorSelectList = document.getElementById('colorSelectList');
         this.colorCountSummary = document.getElementById('colorCountSummary');
@@ -244,7 +242,6 @@ class PerlerBeadApp {
         bindClick('redoBtn', () => this.redo());
         bindClick('exportBtn', () => this.showExportModal());
         bindClick('clearBtn', () => this.clearCanvas());
-        // bindClick('selectColorsBtn', () => this.showColorSelectModal());
         bindClick('themeToggle', () => this.toggleTheme());
         
         // 图片处理按钮
@@ -1432,7 +1429,6 @@ class PerlerBeadApp {
         this.cropBtn.classList.add('active');
         this.cropActions.style.display = 'block';
         this.canvasScroll.classList.add('selecting-mode');
-        // if (this.overlayMask) this.overlayMask.style.display = 'block'; // Removed
         
         // Initialize crop box to 80% of canvas
         this.nineGridState = {
@@ -1455,7 +1451,6 @@ class PerlerBeadApp {
         this.cropActions.style.display = 'none';
         this.canvasScroll.classList.remove('selecting-mode');
         this.selectionBox.style.display = 'none';
-        // if (this.overlayMask) this.overlayMask.style.display = 'none'; // Removed
         this.selectionBox.classList.remove('crop-mode');
         this.mainCanvas.style.pointerEvents = 'auto';
         this.nineGridDrag = null;
@@ -2466,8 +2461,6 @@ class PerlerBeadApp {
         // 保存原始颜色网格，供颜色合并时作为基线
         this.baseColorGrid = this.cloneColorGrid(this.colorGrid);
         if (this.editGuard) this.editGuard.style.display = 'none';
-        // const gridSettingsSection = document.getElementById('gridSettingsSection');
-        // if (gridSettingsSection) gridSettingsSection.style.display = 'none';
         
         // 隐藏框选网格的选框，但保持 isSelectingGrid 状态以便逻辑继续有效
         if (this.selectionBox) {
@@ -2490,8 +2483,6 @@ class PerlerBeadApp {
 
         this.redrawCanvas();
         if (this.toolsSection) this.toolsSection.classList.remove('tool-locked');
-        // 保持框选模式，不自动退出
-        // if (this.isSelectingGrid) this.endGridSelection();
         this.updateCursor();
 
         // 分析完成后自动适配视图
@@ -3558,7 +3549,6 @@ class PerlerBeadApp {
         if (this.selectGridBtn) this.selectGridBtn.classList.add('active');
         this.canvasScroll.classList.add('selecting-mode');
         this.mainCanvas.style.cursor = 'crosshair';
-        // if (this.overlayMask) this.overlayMask.style.display = 'block'; // Removed: handled by CSS box-shadow
         this.gridLinesBeforeSelect = this.showGridLines;
         this.showGridLines = false;
         this.redrawCanvas();
@@ -3572,7 +3562,6 @@ class PerlerBeadApp {
         this.canvasScroll.classList.remove('selecting-mode');
         this.mainCanvas.style.cursor = 'crosshair';
         if (this.selectionBox) this.selectionBox.style.display = 'none';
-        // if (this.overlayMask) this.overlayMask.style.display = 'none'; // Removed
         if (this.selectGridBtn) this.selectGridBtn.classList.remove('active');
         this.showGridLines = this.gridLinesBeforeSelect;
         this.redrawCanvas();
