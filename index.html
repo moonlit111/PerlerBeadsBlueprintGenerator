@@ -125,6 +125,13 @@
                     </div>
                     <div class="section-content" id="gridControls">
                         <div class="control-item">
+                            <label>框选网格大小 (NxN)</label>
+                            <div class="slider-control">
+                                <input type="range" id="gridSelectionSize" min="1" max="10" value="3" step="1">
+                                <span id="gridSelectionSizeValue">3</span>
+                            </div>
+                        </div>
+                        <div class="control-item">
                             <label>网格宽度(px/格) (A/D)</label>
                             <div class="slider-control">
                                 <input type="range" id="gridCols" min="5" max="500" value="40" step="0.2">
@@ -307,6 +314,14 @@
             <!-- 图纸生成顶部工具栏 -->
             <div class="top-bar-tools" id="genToolbar" style="display: none;">
                  <div class="toolbar-group">
+                    <button class="tool-btn" id="uploadBtnTop" title="上传图片">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span>上传图片</span>
+                    </button>
                     <button class="tool-btn" id="analyzeColorsBtn" title="生成图纸">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -449,12 +464,12 @@
             <div class="canvas-wrapper" id="canvasWrapper" style="display: none;">
                 <div class="canvas-scroll" id="canvasScroll">
                     <canvas id="mainCanvas"></canvas>
+                    <!-- 游离式网格覆盖层 -->
+                    <div class="grid-overlay" id="gridOverlay" style="display: none;"></div>
+                    <div class="overlay-mask" id="overlayMask" style="display: none;"></div>
                     <div class="selection-box" id="selectionBox" style="display: none;">
                         <div class="drag-surface" data-handle="move"></div>
-                        <div class="grid-line v1"></div>
-                        <div class="grid-line v2"></div>
-                        <div class="grid-line h1"></div>
-                        <div class="grid-line h2"></div>
+                        <!-- 网格线将由 JS 动态生成 -->
                         <div class="handle handle-tl" data-handle="tl"></div>
                         <div class="handle handle-tr" data-handle="tr"></div>
                         <div class="handle handle-bl" data-handle="bl"></div>

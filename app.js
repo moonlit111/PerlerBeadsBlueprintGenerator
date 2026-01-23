@@ -8,7 +8,7 @@ class PerlerBeadApp {
         this.selectedTool = 'brush';
         this.selectedColor = null;
         this.colorSystem = 'MARD';
-        this.colorMethod = 'average';
+        this.colorMethod = 'dominant';
         this.zoomLevel = 1;
         this.isDrawing = false;
         this.showGridLines = true;
@@ -29,6 +29,7 @@ class PerlerBeadApp {
         this.isCropping = false;
         this.isAdjustingContrast = false;
         this.contrastValue = 0;
+        this.gridSelectionSize = 3;
         
         // Workspace state
         this.currentWorkspace = 'generation'; // 'generation' or 'editing'
@@ -133,6 +134,8 @@ class PerlerBeadApp {
         this.lockGridRatioBtn = document.getElementById('lockGridRatioBtn');
         this.selectGridBtn = document.getElementById('selectGridBtn');
         this.selectionBox = document.getElementById('selectionBox');
+        this.overlayMask = document.getElementById('overlayMask');
+        this.gridOverlay = document.getElementById('gridOverlay');
         this.nineGridHandles = this.selectionBox ? this.selectionBox.querySelectorAll('[data-handle]') : [];
         
         // 调色板
@@ -322,6 +325,26 @@ class PerlerBeadApp {
         });
         const gridOffsetXControls = bindRangeAndNumber('gridOffsetX', 'gridOffsetXInput', () => this.updateGridManual());
         const gridOffsetYControls = bindRangeAndNumber('gridOffsetY', 'gridOffsetYInput', () => this.updateGridManual());
+
+        // 框选网格大小
+        const gridSelectionSizeInput = document.getElementById('gridSelectionSize');
+        if (gridSelectionSizeInput) {
+            gridSelectionSizeInput.addEventListener('input', (e) => {
+                this.gridSelectionSize = parseInt(e.target.value) || 3;
+                const display = document.getElementById('gridSelectionSizeValue');
+                if (display) display.textContent = this.gridSelectionSize;
+                
+                if (this.isSelectingGrid) {
+                    this.renderNineGridOverlay();
+                }
+            });
+        }
+        
+        // 顶部上传按钮
+        bindClick('uploadBtnTop', () => {
+            const input = document.getElementById('imageInput');
+            if (input) input.click();
+        });
 
         const setOffsetBounds = (controls, min, max) => {
             if (!controls) return;
@@ -850,23 +873,16 @@ class PerlerBeadApp {
         let height = this.uploadedImage.height;
         
         // 自动调整尺寸逻辑：
-        // 1. 如果图片过大，缩小以适应最大限制
-        // 2. 如果图片过小，放大以填满屏幕（用户需求：默认图片能占满整个画框）
+        // 1. 无论图片多大，我们都希望它能以“最佳分辨率”显示在屏幕上。
+        // 2. 如果图片很小（比如像素画），我们不应该把它拉伸模糊，而是保持原样，但在视图中放大显示（通过 zoom）。
+        // 3. 但是为了处理方便，如果图片过大，限制最大尺寸。
         
         // 计算目标尺寸（考虑 dpr 的物理像素）
-        const targetW = containerW * dpr;
-        const targetH = containerH * dpr;
+        // const targetW = containerW * dpr;
+        // const targetH = containerH * dpr;
         
-        // 计算填满容器所需的比例 (Contain模式)
-        const scaleW = targetW / width;
-        const scaleH = targetH / height;
-        const fitScale = Math.min(scaleW, scaleH);
-        
-        // 如果图片小于目标尺寸（需要放大），则应用放大比例
-        if (fitScale > 1) {
-            width = Math.round(width * fitScale);
-            height = Math.round(height * fitScale);
-        }
+        // 不再因为图片小就自动拉大 canvas 的物理尺寸，这样会导致像素模糊。
+        // 我们保持图片的原始尺寸（只要不超过最大限制），然后通过 fitImageToView 来缩放视图。
         
         // 再次检查并应用最大尺寸限制
         if (width > maxCanvasWidth || height > maxCanvasHeight) {
@@ -874,6 +890,10 @@ class PerlerBeadApp {
             width = Math.round(width * ratio);
             height = Math.round(height * ratio);
         }
+        
+        // 修正画布大小，确保至少为1
+        width = Math.max(1, width);
+        height = Math.max(1, height);
         
         // 设置画布大小
         this.mainCanvas.width = width;
@@ -895,26 +915,33 @@ class PerlerBeadApp {
             this.fitImageToView();
         }, 50);
     }
-
+    
     getMaxZoom() {
+        // 如果没有图片或画布，给一个默认值
         if (!this.mainCanvas || !this.canvasScroll) return 10;
-        if (this.mainCanvas.width === 0 || this.mainCanvas.height === 0) return 10;
-
-        const containerW = this.canvasScroll.clientWidth || window.innerWidth;
-        const containerH = this.canvasScroll.clientHeight || window.innerHeight;
-
-        // 计算填满屏幕所需的比例
-        const ratioW = containerW / this.mainCanvas.width;
-        const ratioH = containerH / this.mainCanvas.height;
-        const fitRatio = Math.max(ratioW, ratioH);
-
-        // 允许放大到至少能填满屏幕的 5 倍，或者固定的 20 倍（取大者）
-        // 同时限制最大像素尺寸
-        const maxPixelDimension = 30000;
-        const currentMaxDim = Math.max(this.mainCanvas.width, this.mainCanvas.height);
-        const maxSafeZoom = maxPixelDimension / currentMaxDim;
-
-        return Math.min(maxSafeZoom, Math.max(20, fitRatio * 2));
+        
+        // 获取容器尺寸
+        const containerW = this.canvasScroll.clientWidth;
+        const containerH = this.canvasScroll.clientHeight;
+        
+        // 如果容器不可见，给一个默认值
+        if (containerW === 0 || containerH === 0) return 10;
+        
+        const contentW = this.mainCanvas.width || 100;
+        const contentH = this.mainCanvas.height || 100;
+        
+        // 计算“填满屏幕”所需的缩放比例
+        // fitRatio 是让图片完全显示在屏幕内的比例 (contain)
+        // fillRatio 是让图片填满屏幕最小边的比例 (cover)
+        // 这里我们需要的是最大缩放比例，通常是能够看清像素的级别
+        
+        // 允许放大到至少能看清每个像素 (例如每个像素占 20px)
+        const pixelPeepZoom = 20; 
+        
+        // 或者是填满屏幕的 2 倍
+        const fillZoom = Math.max(containerW / contentW, containerH / contentH) * 2;
+        
+        return Math.max(pixelPeepZoom, fillZoom, 10);
     }
 
     fitImageToView() {
@@ -938,8 +965,13 @@ class PerlerBeadApp {
         // 取较小的比例以确保图片完全显示 (contain)
         let newZoom = Math.min(scaleX, scaleY);
         
-        // 用户需求：默认占满整个画框，移除所有边距限制，实现 100% 贴边
-        // 之前尝试过 0.98，但用户希望“最大”，所以改为完全不缩小
+        // 留出一点边距 (例如 5%)，避免贴边太紧，或者按照用户需求“画框不能适应屏幕大小”进行调整
+        // 用户反馈：从最上方菜单栏到最下方画布大小显示之间的空间太小，并且会受到图片大小的影响
+        // 这通常是因为 flex 布局或者高度计算问题。
+        // fitImageToView 只是调整缩放，不影响布局。
+        // 但如果 zoom 过大导致溢出，也是问题。
+        // 这里我们将默认视图稍微缩小一点点，留出边距。
+        newZoom = newZoom * 0.95;
         
         // 限制最小缩放
         newZoom = Math.max(0.01, Math.min(this.getMaxZoom(), newZoom));
@@ -1004,43 +1036,110 @@ class PerlerBeadApp {
 
     renderNineGridOverlay() {
         if (!this.selectionBox || (!this.isSelectingGrid && !this.isCropping)) return;
-        
-        // 使用 getBoundingClientRect 获取精确的渲染位置和尺寸，解决位置偏差问题
-        const canvasRect = this.mainCanvas.getBoundingClientRect();
-        const scrollRect = this.canvasScroll.getBoundingClientRect();
-        
-        const style = getComputedStyle(this.mainCanvas);
-        // border 宽度不需要乘以 zoomLevel，因为 getBoundingClientRect 返回的是视觉像素
-        const borderLeft = parseFloat(style.borderLeftWidth) || 0;
-        const borderTop = parseFloat(style.borderTopWidth) || 0;
 
-        // Canvas 内容区域（排除 border）相对于 scroll 容器的偏移
-        // 注意：canvasScroll 是 relative 定位，所以 left/top 是相对于它的 padding box
-        // rect.left 是包含 border 的可视左边界
-        const contentLeft = canvasRect.left + borderLeft - scrollRect.left + this.canvasScroll.scrollLeft;
-        const contentTop = canvasRect.top + borderTop - scrollRect.top + this.canvasScroll.scrollTop;
-        
-        // Use zoomLevel directly for scaling to avoid rounding errors from rect size
+        // 使用与 updateGridOverlay() 相同的数学计算方式，确保定位一致性
         const scale = this.zoomLevel;
-        
+        const canvasW = this.mainCanvas.width;
+        const canvasH = this.mainCanvas.height;
+        const scrollW = this.canvasScroll.clientWidth;
+        const scrollH = this.canvasScroll.clientHeight;
+
+        // 计算画布在容器中的居中位置（与 CSS transform-origin: center center 一致）
+        const scaledW = canvasW * scale;
+        const scaledH = canvasH * scale;
+        const centerX = scrollW / 2;
+        const centerY = scrollH / 2;
+
+        // 计算覆盖层的基础位置，考虑平移偏移
+        const baseLeft = centerX - scaledW / 2 + this.panOffsetX;
+        const baseTop = centerY - scaledH / 2 + this.panOffsetY;
+
         const { x, y, width, height } = this.nineGridState;
-        
+
+        // 计算框选区域相对于画布的缩放后位置
+        const scaledX = x * scale;
+        const scaledY = y * scale;
+        const scaledWidth = width * scale;
+        const scaledHeight = height * scale;
+
         this.selectionBox.style.display = 'block';
-        this.selectionBox.style.left = (contentLeft + x * scale) + 'px';
-        this.selectionBox.style.top = (contentTop + y * scale) + 'px';
-        this.selectionBox.style.width = (width * scale) + 'px';
-        this.selectionBox.style.height = (height * scale) + 'px';
+        this.selectionBox.style.left = (baseLeft + scaledX) + 'px';
+        this.selectionBox.style.top = (baseTop + scaledY) + 'px';
+        this.selectionBox.style.width = scaledWidth + 'px';
+        this.selectionBox.style.height = scaledHeight + 'px';
+        
+        // 动态生成网格线
+        // 清除旧的 grid-line
+        this.selectionBox.querySelectorAll('.grid-line').forEach(el => el.remove());
+        
+        // 仅在框选网格模式下绘制内部网格线
+        if (this.isSelectingGrid) {
+            const n = this.gridSelectionSize;
+            if (n > 1) {
+                const fragment = document.createDocumentFragment();
+                for (let i = 1; i < n; i++) {
+                    const percent = (i / n) * 100;
+                    
+                    // 垂直线
+                    const vLine = document.createElement('div');
+                    vLine.className = 'grid-line';
+                    vLine.style.left = `${percent}%`;
+                    vLine.style.top = '0';
+                    vLine.style.width = '1.5px';
+                    vLine.style.height = '100%';
+                    fragment.appendChild(vLine);
+                    
+                    // 水平线
+                    const hLine = document.createElement('div');
+                    hLine.className = 'grid-line';
+                    hLine.style.top = `${percent}%`;
+                    hLine.style.left = '0';
+                    hLine.style.height = '1.5px';
+                    hLine.style.width = '100%';
+                    fragment.appendChild(hLine);
+                }
+                this.selectionBox.appendChild(fragment);
+            }
+        } else if (this.isCropping) {
+            // 裁剪模式下通常使用九宫格 (3x3) 辅助
+            const n = 3;
+            const fragment = document.createDocumentFragment();
+            for (let i = 1; i < n; i++) {
+                const percent = (i / n) * 100;
+                
+                // 垂直线
+                const vLine = document.createElement('div');
+                vLine.className = 'grid-line';
+                vLine.style.left = `${percent}%`;
+                vLine.style.top = '0';
+                vLine.style.width = '1.5px';
+                vLine.style.height = '100%';
+                fragment.appendChild(vLine);
+                
+                // 水平线
+                const hLine = document.createElement('div');
+                hLine.className = 'grid-line';
+                hLine.style.top = `${percent}%`;
+                hLine.style.left = '0';
+                hLine.style.height = '1.5px';
+                hLine.style.width = '100%';
+                fragment.appendChild(hLine);
+            }
+            this.selectionBox.appendChild(fragment);
+        }
     }
 
     onNineGridDrag(e) {
         if (!this.nineGridDrag || (!this.isSelectingGrid && !this.isCropping)) return;
         const { mode, startClientX, startClientY, startState } = this.nineGridDrag;
-        
-        // Use zoomLevel directly for scaling to ensure consistent coordinate mapping
-        const scale = this.zoomLevel;
 
-        const dxCanvas = (e.clientX - startClientX) / scale;
-        const dyCanvas = (e.clientY - startClientY) / scale;
+        // 使用统一的坐标转换逻辑，与 screenToCanvasCoords 保持一致
+        const { canvasX: currentX, canvasY: currentY } = this.screenToCanvasCoords(e.clientX, e.clientY);
+        const { canvasX: startX, canvasY: startY } = this.screenToCanvasCoords(startClientX, startClientY);
+
+        const scale = this.zoomLevel || 1;
+        const dxCanvas = currentX - startX;
+        const dyCanvas = currentY - startY;
         let { x, y, width, height } = startState;
 
         const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
@@ -1049,7 +1148,7 @@ class PerlerBeadApp {
             x = clamp(x + dxCanvas, 0, Math.max(0, this.mainCanvas.width - width));
             y = clamp(y + dyCanvas, 0, Math.max(0, this.mainCanvas.height - height));
         } else {
-            const minSize = 10;
+            const minSize = 1;
             // 允许网格扩展到整个画布大小
             const maxWidth = this.mainCanvas.width;
             const maxHeight = this.mainCanvas.height;
@@ -1082,6 +1181,19 @@ class PerlerBeadApp {
                 // 向下拖动：可以扩大到画布下边界
                 height = clamp(height + dyCanvas, minSize, maxHeight - y);
             }
+            
+            // 磁吸式贴附器：当接近正方形时自动吸附 (仅在框选网格时)
+            if (this.isSelectingGrid && !mode.includes('move')) {
+                const diff = Math.abs(width - height);
+                const threshold = 20 / scale; // 20px threshold in screen space
+                if (diff < threshold) {
+                    // 吸附到较小的一边，或者平均值？通常吸附到用户意图的那一边。
+                    // 简单起见，取平均或者强制相等
+                    const size = (width + height) / 2;
+                    width = size;
+                    height = size;
+                }
+            }
         }
 
         this.nineGridState = { x, y, width, height };
@@ -1098,8 +1210,8 @@ class PerlerBeadApp {
 
     applyNineGridToGridData() {
         if (!this.isSelectingGrid) return;
-        const cellWidth = this.nineGridState.width / 3;
-        const cellHeight = this.nineGridState.height / 3;
+        const cellWidth = this.nineGridState.width / this.gridSelectionSize;
+        const cellHeight = this.nineGridState.height / this.gridSelectionSize;
         const offsetX = this.nineGridState.x % cellWidth;
         const offsetY = this.nineGridState.y % cellHeight;
 
@@ -1162,8 +1274,8 @@ class PerlerBeadApp {
 
         // 同步九宫格大小（保持 3x3）- 仅在用户手动调整输入框时更新（非拖动状态）
         if (this.isSelectingGrid && cellWidth > 0 && cellHeight > 0 && !this.nineGridDrag) {
-            this.nineGridState.width = cellWidth * 3;
-            this.nineGridState.height = cellHeight * 3;
+            this.nineGridState.width = cellWidth * this.gridSelectionSize;
+            this.nineGridState.height = cellHeight * this.gridSelectionSize;
             this.renderNineGridOverlay();
         }
     }
@@ -1210,6 +1322,7 @@ class PerlerBeadApp {
         this.cropBtn.classList.add('active');
         this.cropActions.style.display = 'block';
         this.canvasScroll.classList.add('selecting-mode');
+        // if (this.overlayMask) this.overlayMask.style.display = 'block'; // Removed
         
         // Initialize crop box to 80% of canvas
         this.nineGridState = {
@@ -1232,6 +1345,7 @@ class PerlerBeadApp {
         this.cropActions.style.display = 'none';
         this.canvasScroll.classList.remove('selecting-mode');
         this.selectionBox.style.display = 'none';
+        // if (this.overlayMask) this.overlayMask.style.display = 'none'; // Removed
         this.selectionBox.classList.remove('crop-mode');
         this.mainCanvas.style.pointerEvents = 'auto';
         this.nineGridDrag = null;
@@ -1278,7 +1392,7 @@ class PerlerBeadApp {
         const newImg = new Image();
         newImg.onload = () => {
             this.uploadedImage = newImg;
-            this.cancelCrop();
+            this.cancelCrop(); // cancelCrop already handles overlayMask
             this.initCanvasWithImage();
         };
         newImg.src = cropCanvas.toDataURL();
@@ -1630,6 +1744,100 @@ class PerlerBeadApp {
             // 在布局更新后再绘制，避免缩放过渡抖动
             requestAnimationFrame(() => this.renderNineGridOverlay());
         }
+        // 更新游离式网格覆盖层
+        this.updateGridOverlay();
+    }
+
+    /**
+     * 更新游离式网格覆盖层 - 使用 CSS 绘制网格线，与图片分离
+     * 保持网格线粗细在任何缩放级别下都一致为 1px
+     */
+    updateGridOverlay() {
+        if (!this.gridOverlay || !this.mainCanvas || !this.canvasScroll) return;
+        
+        // 框选模式下不显示主网格覆盖层
+        if (this.isSelectingGrid || this.isCropping) {
+            this.gridOverlay.style.display = 'none';
+            return;
+        }
+        
+        // 如果不需要显示网格线，隐藏覆盖层
+        if (!this.showGridLines) {
+            this.gridOverlay.style.display = 'none';
+            return;
+        }
+        
+        // 获取网格参数
+        const cols = this.colorGrid.length > 0 ? this.colorGrid[0].length : (this.gridData ? this.gridData.cols : 0);
+        const rows = this.colorGrid.length > 0 ? this.colorGrid.length : (this.gridData ? this.gridData.rows : 0);
+        
+        if (cols <= 0 || rows <= 0) {
+            this.gridOverlay.style.display = 'none';
+            return;
+        }
+        
+        const { offsetX = 0, offsetY = 0, cellWidth: storedW, cellHeight: storedH } = this.gridData || {};
+        const cellWidth = storedW || this.mainCanvas.width / cols;
+        const cellHeight = storedH || this.mainCanvas.height / rows;
+        
+        const scale = this.zoomLevel;
+        const canvasW = this.mainCanvas.width;
+        const canvasH = this.mainCanvas.height;
+        const scrollW = this.canvasScroll.clientWidth;
+        const scrollH = this.canvasScroll.clientHeight;
+        
+        // 计算画布在容器中的居中位置（与 CSS transform-origin: center center 一致）
+        const scaledW = canvasW * scale;
+        const scaledH = canvasH * scale;
+        const centerX = scrollW / 2;
+        const centerY = scrollH / 2;
+        
+        // 计算覆盖层的位置，考虑平移偏移
+        const overlayLeft = centerX - scaledW / 2 + this.panOffsetX;
+        const overlayTop = centerY - scaledH / 2 + this.panOffsetY;
+        
+        // 显示覆盖层并设置位置和大小
+        this.gridOverlay.style.display = 'block';
+        this.gridOverlay.style.left = `${overlayLeft}px`;
+        this.gridOverlay.style.top = `${overlayTop}px`;
+        this.gridOverlay.style.width = `${scaledW}px`;
+        this.gridOverlay.style.height = `${scaledH}px`;
+        
+        // 计算缩放后的偏移和单元格尺寸
+        const scaledOffsetX = offsetX * scale;
+        const scaledOffsetY = offsetY * scale;
+        const scaledCellWidth = cellWidth * scale;
+        const scaledCellHeight = cellHeight * scale;
+        
+        // 清空现有网格线
+        this.gridOverlay.innerHTML = '';
+        
+        // 创建文档片段以提高性能
+        const fragment = document.createDocumentFragment();
+        
+        // 绘制垂直线
+        for (let col = 0; col <= cols; col++) {
+            const x = scaledOffsetX + col * scaledCellWidth;
+            if (x >= -1 && x <= scaledW + 1) {
+                const line = document.createElement('div');
+                line.className = 'grid-line grid-line-v';
+                line.style.left = `${x}px`;
+                fragment.appendChild(line);
+            }
+        }
+        
+        // 绘制水平线
+        for (let row = 0; row <= rows; row++) {
+            const y = scaledOffsetY + row * scaledCellHeight;
+            if (y >= -1 && y <= scaledH + 1) {
+                const line = document.createElement('div');
+                line.className = 'grid-line grid-line-h';
+                line.style.top = `${y}px`;
+                fragment.appendChild(line);
+            }
+        }
+        
+        this.gridOverlay.appendChild(fragment);
     }
 
     // 应用平移边界限制
@@ -1833,32 +2041,9 @@ class PerlerBeadApp {
             
             this.ctx.filter = 'none';
 
-            // 绘制网格线在图片上 (Generation Mode usually needs grid lines to see alignment)
-            // In Edit mode (fallback to source), maybe also show grid lines.
-            if (this.showGridLines) {
-                this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'; // Red lines for contrast on photo
-                this.ctx.lineWidth = 1;
-                
-                // Draw V lines
-                for (let col = 0; col <= cols; col++) {
-                    const x = offsetX + col * cellWidth;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x, 0);
-                    this.ctx.lineTo(x, this.mainCanvas.height);
-                    this.ctx.stroke();
-                }
-                
-                // Draw H lines
-                for (let row = 0; row <= rows; row++) {
-                    const y = offsetY + row * cellHeight;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, y);
-                    this.ctx.lineTo(this.mainCanvas.width, y);
-                    this.ctx.stroke();
-                }
-            }
+            // 网格线已改为使用游离式 CSS 覆盖层绘制，在 updateGridOverlay() 中处理
         } else if (this.colorGrid.length > 0) {
-            // 绘制颜色单元格 (Pixel Art)
+            // 绘制颜色单元格 (Pixel Art) - 不再在 canvas 上绘制网格线
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     const cell = this.colorGrid[row][col];
@@ -1873,19 +2058,15 @@ class PerlerBeadApp {
                         this.ctx.fillStyle = '#ffffff';
                         this.ctx.fillRect(x, y, cellWidth, cellHeight);
                     }
-                    
-                    // 绘制网格线 (Subtle lines for pixel art)
-                    if (this.showGridLines) {
-                        this.ctx.strokeStyle = '#e0e0e0';
-                        this.ctx.lineWidth = 0.5;
-                        this.ctx.strokeRect(x, y, cellWidth, cellHeight);
-                    }
                 }
             }
         }
         
         this.updateUsedColorsPalette();
         this.updateColorStats();
+        
+        // 更新游离式网格覆盖层
+        this.updateGridOverlay();
     }
 
     // 画布交互
@@ -2070,13 +2251,19 @@ class PerlerBeadApp {
                 const x = col * cellWidth + offsetX;
                 const y = row * cellHeight + offsetY;
                 
-                const cellColor = this.getCellColor(imageData, x, y, cellWidth, cellHeight, tempCanvas.width, tempCanvas.height);
-                const closestColors = window.findClosestColors(cellColor);
+                // 确保采样区域在画布范围内，避免边缘像素丢失
+                // 允许超出一点点，getCellColor 会做边界检查
                 
+                const cellColor = this.getCellColor(imageData, x, y, cellWidth, cellHeight, tempCanvas.width, tempCanvas.height);
+                const hasColor = !!cellColor;
+                const closestColors = hasColor ? window.findClosestColors(cellColor) : [];
+
+                if (!this.colorGrid[row]) this.colorGrid[row] = [];
                 this.colorGrid[row][col] = {
-                    rgb: cellColor,
-                    color: closestColors[0],
-                    alternatives: closestColors.slice(1)
+                    rgb: cellColor || { r: 255, g: 255, b: 255 },
+                    color: hasColor ? closestColors[0] : null,
+                    alternatives: hasColor ? closestColors.slice(1) : [],
+                    isExternal: !hasColor
                 };
             }
         }
@@ -2119,6 +2306,8 @@ class PerlerBeadApp {
 
     getCellColor(imageData, x, y, w, h, canvasWidth, canvasHeight) {
         const colors = [];
+        let transparentCount = 0;
+        const alphaThreshold = 10; // Skip pixels that are effectively transparent
         const startX = Math.max(0, Math.floor(x));
         const startY = Math.max(0, Math.floor(y));
         const endX = Math.min(canvasWidth, Math.ceil(x + w));
@@ -2127,6 +2316,11 @@ class PerlerBeadApp {
         for (let py = startY; py < endY; py++) {
             for (let px = startX; px < endX; px++) {
                 const i = (py * canvasWidth + px) * 4;
+                const a = imageData.data[i + 3];
+                if (a <= alphaThreshold) {
+                    transparentCount++;
+                    continue;
+                }
                 colors.push({
                     r: imageData.data[i],
                     g: imageData.data[i + 1],
@@ -2135,13 +2329,15 @@ class PerlerBeadApp {
             }
         }
         
-        if (colors.length === 0) return { r: 255, g: 255, b: 255 };
+        if (colors.length === 0) return null;
         
         // 根据颜色识别方式计算
         switch (this.colorMethod) {
             case 'average':
                 return this.getAverageColor(colors);
             case 'dominant':
+                // 如果透明的色块大于所有有颜色的色块，则为透明
+                if (transparentCount > colors.length) return null;
                 return this.getDominantColor(colors);
             default:
                 return this.getAverageColor(colors);
@@ -3028,6 +3224,11 @@ class PerlerBeadApp {
         this.hideColorSelectModal();
         this.initAllColorsPalette();
         this.updateUsedColorsPalette();
+
+        // 如果已经生成过图纸，重新分析颜色
+        if (this.isGenerated) {
+            this.analyzeColors();
+        }
     }
 
     loadSelectedColors() {
@@ -3058,6 +3259,7 @@ class PerlerBeadApp {
         if (this.selectGridBtn) this.selectGridBtn.classList.add('active');
         this.canvasScroll.classList.add('selecting-mode');
         this.mainCanvas.style.cursor = 'crosshair';
+        // if (this.overlayMask) this.overlayMask.style.display = 'block'; // Removed: handled by CSS box-shadow
         this.gridLinesBeforeSelect = this.showGridLines;
         this.showGridLines = false;
         this.redrawCanvas();
@@ -3071,6 +3273,7 @@ class PerlerBeadApp {
         this.canvasScroll.classList.remove('selecting-mode');
         this.mainCanvas.style.cursor = 'crosshair';
         if (this.selectionBox) this.selectionBox.style.display = 'none';
+        // if (this.overlayMask) this.overlayMask.style.display = 'none'; // Removed
         if (this.selectGridBtn) this.selectGridBtn.classList.remove('active');
         this.showGridLines = this.gridLinesBeforeSelect;
         this.redrawCanvas();
@@ -3178,6 +3381,8 @@ class PerlerBeadApp {
             if (window.innerWidth > 768) {
                 this.closeMobileMenus();
             }
+            // 窗口大小变化时更新游离式网格覆盖层
+            this.updateGridOverlay();
         });
     }
 
