@@ -17,9 +17,10 @@
         </div>
         
         <div class="workspace-tabs">
-            <button class="ws-tab active" data-ws="generation">图纸生成</button>
-            <button class="ws-tab" data-ws="editing">图纸编辑</button>
-        </div>
+        <button class="ws-tab active" data-ws="generation">图纸生成</button>
+        <button class="ws-tab" data-ws="editing">图纸编辑</button>
+        <button class="ws-tab" data-ws="identify">颜色识别</button>
+    </div>
 
         <div class="toolbar-right">
             <button class="toolbar-btn icon-only mobile-toggle" id="toggleLeftPanel" title="显示工具">
@@ -95,11 +96,69 @@
                                 </svg>
                                 <span>对比度</span>
                             </button>
+                            <button class="btn-secondary btn-sidebar-action" id="resizeBtn" title="缩放图片">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <polyline points="9 21 3 21 3 15"></polyline>
+                                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                                </svg>
+                                <span>缩放</span>
+                            </button>
                         </div>
                         <!-- 裁剪确认操作栏，默认隐藏 -->
                         <div class="crop-actions" id="cropActions" style="display: none; margin-top: 10px;">
                             <button class="btn-primary btn-full" id="confirmCropBtn">确认裁剪</button>
                             <button class="btn-secondary btn-full" id="cancelCropBtn" style="margin-top: 5px;">取消</button>
+                        </div>
+                        <!-- 缩放操作栏，默认隐藏 -->
+                        <div class="process-actions" id="resizeActions" style="display: none; margin-top: 10px;">
+                            <div class="control-item">
+                                <label>缩放比例 (倍)</label>
+                                <div class="slider-control">
+                                    <input type="range" id="resizeScale" min="0.1" max="5" value="1" step="0.1">
+                                    <span id="resizeScaleValue">1.0x</span>
+                                </div>
+                            </div>
+                            
+                            <div class="control-item">
+                                <label>目标宽度 (px)</label>
+                                <div class="slider-control">
+                                    <input type="range" id="resizeWidthSlider" min="1" max="5000" value="100" step="1" style="display: none;">
+                                    <input type="number" id="resizeWidth" class="number-inline" min="1" step="1" style="width: 100%;">
+                                </div>
+                            </div>
+                            
+                            <div class="chain-lock-container">
+                                <button class="btn-chain active" id="resizeLockRatio" title="锁定宽高比例">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M8 12a4 4 0 0 1 4-4h3"></path>
+                                        <path d="M16 12a4 4 0 0 1-4 4H9"></path>
+                                        <path d="M15 7l2-2 4 4-2 2"></path>
+                                        <path d="M9 17l-2 2-4-4 2-2"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="control-item">
+                                <label>目标高度 (px)</label>
+                                <div class="slider-control">
+                                    <input type="range" id="resizeHeightSlider" min="1" max="5000" value="100" step="1" style="display: none;">
+                                    <input type="number" id="resizeHeight" class="number-inline" min="1" step="1" style="width: 100%;">
+                                </div>
+                            </div>
+
+                            <div class="control-item">
+                                <label>缩放算法</label>
+                                <select id="resizeAlgorithm" class="select-clean">
+                                    <option value="smooth">平滑 (Bilinear)</option>
+                                    <option value="pixelated">像素化 (Nearest)</option>
+                                </select>
+                            </div>
+                            <div class="grid-actions-grid" style="margin-top: 8px;">
+                                <button class="btn-primary btn-full" id="confirmResizeBtn">确认</button>
+                                <button class="btn-secondary btn-full" id="cancelResizeBtn">取消</button>
+                            </div>
                         </div>
                         <!-- 对比度调节操作栏，默认隐藏 -->
                         <div class="process-actions" id="contrastActions" style="display: none; margin-top: 10px;">
@@ -134,8 +193,8 @@
                         <div class="control-item">
                             <label>网格宽度(px/格) (A/D)</label>
                             <div class="slider-control">
-                                <input type="range" id="gridCols" min="5" max="500" value="40" step="0.2">
-                                <input type="number" id="gridColsInput" min="5" max="2000" value="40" step="0.01" class="number-inline" inputmode="decimal">
+                                <input type="range" id="gridCols" min="1" max="500" value="40" step="0.2">
+                                <input type="number" id="gridColsInput" min="1" max="2000" value="40" step="0.01" class="number-inline" inputmode="decimal">
                             </div>
                         </div>
                         
@@ -154,8 +213,8 @@
                         <div class="control-item">
                             <label>网格高度(px/格) (W/S)</label>
                             <div class="slider-control">
-                                <input type="range" id="gridRows" min="5" max="500" value="40" step="0.2">
-                                <input type="number" id="gridRowsInput" min="5" max="2000" value="40" step="0.01" class="number-inline" inputmode="decimal">
+                                <input type="range" id="gridRows" min="1" max="500" value="40" step="0.2">
+                                <input type="number" id="gridRowsInput" min="1" max="2000" value="40" step="0.01" class="number-inline" inputmode="decimal">
                             </div>
                         </div>
                         <div class="control-item">
@@ -304,6 +363,32 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- 颜色识别侧边栏内容 -->
+            <div id="identify-sidebar-content" style="display: none;">
+                <div class="sidebar-section">
+                     <div class="section-header">
+                        <h3 class="section-title">颜色识别结果</h3>
+                     </div>
+                     <div class="section-content">
+                        <div class="picked-color-display" id="pickedColorPreview">
+                            <div class="picked-color-swatch" id="pickedColorSwatch" style="background-color: transparent;"></div>
+                            <div class="picked-color-values" id="pickedColorInfo">
+                                <span style="font-weight: 600;">点击画布取色</span>
+                                <span>-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="divider"></div>
+                        <label>最接近的颜色</label>
+                        <div id="similarColorsList" class="similar-colors-list">
+                            <div class="empty-state">
+                                <p>点击画布任意位置识别颜色</p>
+                            </div>
+                        </div>
+                     </div>
                 </div>
             </div>
 

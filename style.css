@@ -2985,6 +2985,108 @@ body.dark-mode .grid-overlay .grid-line {
     border-left: 4px solid #ef4444;
 }
 
+/* 颜色识别样式 */
+.similar-colors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+}
+
+.similar-color-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.similar-color-item:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-primary);
+}
+
+.similar-color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.similar-color-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.similar-color-code {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.similar-color-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.similarity-score {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.picked-color-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.picked-color-swatch {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.picked-color-values {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* 缩放面板样式优化 */
+#resizeActions .control-item {
+    margin-bottom: 15px;
+}
+
+#resizeActions .chain-lock-container {
+    margin: 10px 0;
+}
+
+#resizeActions .grid-actions-grid {
+    margin-top: 20px !important;
+}
+
 .toast-info {
     border-left: 4px solid #3b82f6;
 }

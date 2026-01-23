@@ -179,6 +179,16 @@ class PerlerBeadApp {
         this.confirmContrastBtn = document.getElementById('confirmContrastBtn');
         this.cancelContrastBtn = document.getElementById('cancelContrastBtn');
 
+        // 缩放
+        this.resizeBtn = document.getElementById('resizeBtn');
+        this.resizeActions = document.getElementById('resizeActions');
+        this.resizeWidth = document.getElementById('resizeWidth');
+        this.resizeHeight = document.getElementById('resizeHeight');
+        this.resizeLockRatio = document.getElementById('resizeLockRatio');
+        this.resizeAlgorithm = document.getElementById('resizeAlgorithm');
+        this.confirmResizeBtn = document.getElementById('confirmResizeBtn');
+        this.cancelResizeBtn = document.getElementById('cancelResizeBtn');
+
         this.imageProcessSection = document.getElementById('imageProcessSection');
         
         // 消息提示
@@ -201,6 +211,10 @@ class PerlerBeadApp {
         this.workspaceTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const ws = tab.dataset.ws;
+                if (ws === 'editing' && !this.isGenerated) {
+                    this.showToast('请先生成图纸', 'info');
+                    return;
+                }
                 this.switchWorkspace(ws);
             });
         });
@@ -250,6 +264,84 @@ class PerlerBeadApp {
                 this.contrastValue = parseInt(e.target.value, 10);
                 if (this.contrastValueDisplay) this.contrastValueDisplay.textContent = this.contrastValue;
                 this.updateContrastPreview();
+            });
+        }
+
+        // 缩放
+        bindClick('resizeBtn', () => this.toggleResizeMode());
+        bindClick('confirmResizeBtn', () => this.confirmResize());
+        bindClick('cancelResizeBtn', () => this.cancelResize());
+        
+        // 缩放比例滑块
+        const resizeScale = document.getElementById('resizeScale');
+        const resizeScaleValue = document.getElementById('resizeScaleValue');
+        
+        if (resizeScale && this.resizeWidth && this.resizeHeight) {
+            resizeScale.addEventListener('input', () => {
+                const scale = parseFloat(resizeScale.value);
+                if (resizeScaleValue) resizeScaleValue.textContent = scale.toFixed(1) + 'x';
+                
+                if (this.uploadedImage) {
+                    const w = Math.round(this.uploadedImage.width * scale);
+                    const h = Math.round(this.uploadedImage.height * scale);
+                    this.resizeWidth.value = w;
+                    this.resizeHeight.value = h;
+                }
+            });
+        }
+        
+        // 锁定宽高比按钮
+        const resizeLockBtn = document.getElementById('resizeLockRatio');
+        if (resizeLockBtn) {
+            resizeLockBtn.addEventListener('click', () => {
+                const isLocked = resizeLockBtn.classList.toggle('active');
+                // 这里我们不再使用 checkbox，而是通过 active 类来判断
+                // 但为了保持兼容性，我们可能需要在 resizeWidth/Height 的监听器中修改判断逻辑
+            });
+        }
+
+        if (this.resizeWidth && this.resizeHeight) {
+            this.resizeWidth.addEventListener('input', () => {
+                const isLocked = document.getElementById('resizeLockRatio').classList.contains('active');
+                if (isLocked && this.uploadedImage) {
+                    const w = parseInt(this.resizeWidth.value);
+                    if (w > 0) {
+                        const ratio = this.uploadedImage.width / this.uploadedImage.height;
+                        this.resizeHeight.value = Math.round(w / ratio);
+                        
+                        // 反向更新比例滑块（近似值）
+                        if (resizeScale) {
+                            const scale = w / this.uploadedImage.width;
+                            // 只有当 scale 在滑块范围内时才更新滑块显示，避免跳动
+                            if (scale >= 0.1 && scale <= 5) {
+                                // resizeScale.value = scale; // 可选：不自动更新滑块位置以免干扰输入
+                                if (resizeScaleValue) resizeScaleValue.textContent = scale.toFixed(1) + 'x';
+                            } else {
+                                if (resizeScaleValue) resizeScaleValue.textContent = '自定义';
+                            }
+                        }
+                    }
+                }
+            });
+            this.resizeHeight.addEventListener('input', () => {
+                const isLocked = document.getElementById('resizeLockRatio').classList.contains('active');
+                if (isLocked && this.uploadedImage) {
+                    const h = parseInt(this.resizeHeight.value);
+                    if (h > 0) {
+                        const ratio = this.uploadedImage.width / this.uploadedImage.height;
+                        this.resizeWidth.value = Math.round(h * ratio);
+                        
+                        // 反向更新比例滑块
+                         if (resizeScale) {
+                            const scale = h / this.uploadedImage.height;
+                            if (scale >= 0.1 && scale <= 5) {
+                                if (resizeScaleValue) resizeScaleValue.textContent = scale.toFixed(1) + 'x';
+                            } else {
+                                if (resizeScaleValue) resizeScaleValue.textContent = '自定义';
+                            }
+                        }
+                    }
+                }
             });
         }
 
@@ -830,6 +922,11 @@ class PerlerBeadApp {
                 this.uploadedImage = img;
                 this.showCanvas();
                 this.initCanvasWithImage();
+                
+                // Check image size
+                if (img.width < 100 || img.height < 100) {
+                    this.showToast('图片尺寸较小，建议放大以获得更好效果', 'info');
+                }
             };
             img.src = e.target.result;
         };
@@ -1212,8 +1309,17 @@ class PerlerBeadApp {
         if (!this.isSelectingGrid) return;
         const cellWidth = this.nineGridState.width / this.gridSelectionSize;
         const cellHeight = this.nineGridState.height / this.gridSelectionSize;
-        const offsetX = this.nineGridState.x % cellWidth;
-        const offsetY = this.nineGridState.y % cellHeight;
+        
+        let offsetX = this.nineGridState.x % cellWidth;
+        let offsetY = this.nineGridState.y % cellHeight;
+
+        // 如果偏移量大于0，调整为负数，以确保网格覆盖画布左上角
+        if (offsetX > 0.01) offsetX -= cellWidth;
+        if (offsetY > 0.01) offsetY -= cellHeight;
+        
+        // 修正接近 0 的负数（浮点误差）
+        if (Math.abs(offsetX) < 0.01) offsetX = 0;
+        if (Math.abs(offsetY) < 0.01) offsetY = 0;
 
         const setVal = (id, val) => {
             const el = document.getElementById(id);
@@ -1318,6 +1424,10 @@ class PerlerBeadApp {
         // Close other modes
         if (this.isSelectingGrid) this.endGridSelection();
         
+        const isActive = this.resizeBtn && this.resizeBtn.classList.contains('active');
+        if (isActive) this.cancelResize();
+        if (this.isAdjustingContrast) this.cancelContrast();
+
         this.isCropping = true;
         this.cropBtn.classList.add('active');
         this.cropActions.style.display = 'block';
@@ -1350,6 +1460,75 @@ class PerlerBeadApp {
         this.mainCanvas.style.pointerEvents = 'auto';
         this.nineGridDrag = null;
         this.updateCursor();
+    }
+
+    toggleResizeMode() {
+        if (!this.uploadedImage) return;
+        this.closeMobileMenus();
+        
+        // Close other modes if necessary
+        if (this.isSelectingGrid) this.endGridSelection();
+        if (this.isCropping) this.cancelCrop();
+        if (this.isAdjustingContrast) this.cancelContrast();
+
+        const isActive = this.resizeBtn.classList.contains('active');
+        if (isActive) {
+            this.cancelResize();
+        } else {
+            this.resizeBtn.classList.add('active');
+            this.resizeActions.style.display = 'block';
+            
+            // Init values
+            this.resizeWidth.value = this.uploadedImage.width;
+            this.resizeHeight.value = this.uploadedImage.height;
+            const scaleSlider = document.getElementById('resizeScale');
+            const scaleValue = document.getElementById('resizeScaleValue');
+            if (scaleSlider) scaleSlider.value = 1;
+            if (scaleValue) scaleValue.textContent = '1.0x';
+        }
+    }
+
+    confirmResize() {
+        if (!this.uploadedImage) return;
+        
+        const w = parseInt(this.resizeWidth.value);
+        const h = parseInt(this.resizeHeight.value);
+        
+        if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) {
+            this.showToast('请输入有效的宽高', 'error');
+            return;
+        }
+        
+        const algorithm = this.resizeAlgorithm.value;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        
+        // Set smoothing
+        if (algorithm === 'pixelated') {
+            ctx.imageSmoothingEnabled = false;
+        } else {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+        }
+        
+        ctx.drawImage(this.uploadedImage, 0, 0, w, h);
+        
+        const newImg = new Image();
+        newImg.onload = () => {
+            this.uploadedImage = newImg;
+            this.initCanvasWithImage();
+            this.cancelResize();
+            this.showToast(`图片缩放为 ${w}x${h}`, 'success');
+        };
+        newImg.src = canvas.toDataURL();
+    }
+
+    cancelResize() {
+        this.resizeBtn.classList.remove('active');
+        this.resizeActions.style.display = 'none';
     }
 
     confirmCrop() {
@@ -1412,6 +1591,9 @@ class PerlerBeadApp {
         if (this.isSelectingGrid) this.endGridSelection();
         if (this.isCropping) this.cancelCrop();
         
+        const isActive = this.resizeBtn && this.resizeBtn.classList.contains('active');
+        if (isActive) this.cancelResize();
+
         this.isAdjustingContrast = true;
         this.contrastValue = 0;
         if (this.contrastBtn) this.contrastBtn.classList.add('active');
@@ -1467,11 +1649,17 @@ class PerlerBeadApp {
         });
 
         // Toggle UI Panels
+        if (this.genSidebarContent) this.genSidebarContent.style.display = 'none';
+        if (this.editSidebarContent) this.editSidebarContent.style.display = 'none';
+        const identifySidebar = document.getElementById('identify-sidebar-content');
+        if (identifySidebar) identifySidebar.style.display = 'none';
+        
+        if (this.genToolbar) this.genToolbar.style.display = 'none';
+        if (this.editToolbar) this.editToolbar.style.display = 'none';
+
         if (workspace === 'generation') {
             if (this.genSidebarContent) this.genSidebarContent.style.display = 'block';
-            if (this.editSidebarContent) this.editSidebarContent.style.display = 'none';
             if (this.genToolbar) this.genToolbar.style.display = 'flex';
-            if (this.editToolbar) this.editToolbar.style.display = 'none';
             
             // Reset state for generation view
             this.isCompareMode = false;
@@ -1486,19 +1674,15 @@ class PerlerBeadApp {
             };
             updateCompareBtn(this.toggleCompareBtn);
             updateCompareBtn(this.toggleCompareBtnSidebar);
-        } else {
-            if (this.genSidebarContent) this.genSidebarContent.style.display = 'none';
+        } else if (workspace === 'editing') {
             if (this.editSidebarContent) this.editSidebarContent.style.display = 'block';
-            if (this.genToolbar) this.genToolbar.style.display = 'none';
             if (this.editToolbar) this.editToolbar.style.display = 'flex';
-            
-            // Auto analyze if needed when entering edit mode
-            if (!this.isGenerated && this.uploadedImage) {
-                this.analyzeColors();
-            }
+        } else if (workspace === 'identify') {
+            if (identifySidebar) identifySidebar.style.display = 'block';
         }
 
         this.redrawCanvas();
+        this.updateCursor();
     }
 
     toggleCompare() {
@@ -2117,6 +2301,11 @@ class PerlerBeadApp {
             return;
         }
 
+        if (this.currentWorkspace === 'identify') {
+            this.mainCanvas.style.cursor = 'crosshair';
+            return;
+        }
+
         if (this.selectedTool) {
             this.mainCanvas.classList.add(`cursor-${this.selectedTool}`);
             if (this.selectedTool === 'pan') {
@@ -2126,11 +2315,16 @@ class PerlerBeadApp {
     }
 
     handleCanvasAction(e) {
-        if (!this.isGenerated) {
+        if (!this.isGenerated && this.currentWorkspace !== 'identify') {
             if (this.editGuard) this.editGuard.style.display = 'flex';
             return;
         }
         const { canvasX: x, canvasY: y } = this.screenToCanvasCoords(e.clientX, e.clientY);
+
+        if (this.currentWorkspace === 'identify') {
+            this.identifyColorAt(x, y);
+            return;
+        }
         
         const cols = this.colorGrid[0].length;
         const rows = this.colorGrid.length;
@@ -2374,6 +2568,111 @@ class PerlerBeadApp {
             }
         });
         return dominant;
+    }
+
+    identifyColorAt(x, y) {
+        if (!this.uploadedImage) return;
+        
+        let r, g, b;
+        
+        // Determine color based on current state
+        if (this.isGenerated && this.colorGrid && this.colorGrid.length > 0) {
+            // Map x,y to grid cell
+            const { offsetX = 0, offsetY = 0, cellWidth, cellHeight } = this.gridData;
+            // Calculate col/row
+            const col = Math.floor((x - offsetX) / cellWidth);
+            const row = Math.floor((y - offsetY) / cellHeight);
+            
+            if (row >= 0 && row < this.colorGrid.length && col >= 0 && col < this.colorGrid[0].length) {
+                const cell = this.colorGrid[row][col];
+                if (cell && cell.color) {
+                    ({ r, g, b } = cell.color.rgb);
+                } else {
+                    return; // Empty/Transparent
+                }
+            } else {
+                return; // Outside grid
+            }
+        } else {
+            // Raw image mode
+            // Ensure x,y are within canvas bounds
+            if (x < 0 || x >= this.mainCanvas.width || y < 0 || y >= this.mainCanvas.height) return;
+            
+            try {
+                // Get pixel from canvas
+                const pixel = this.ctx.getImageData(x, y, 1, 1).data;
+                if (pixel[3] === 0) return; // Transparent
+                r = pixel[0];
+                g = pixel[1];
+                b = pixel[2];
+            } catch (e) {
+                return;
+            }
+        }
+        
+        if (r === undefined) return;
+        
+        const targetColor = { r, g, b };
+        this.updateIdentifyUI(targetColor);
+    }
+
+    rgbToHex(r, g, b) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+
+    updateIdentifyUI(targetColor) {
+        // Show picked color
+        const swatch = document.getElementById('pickedColorSwatch');
+        const info = document.getElementById('pickedColorInfo');
+        const hex = this.rgbToHex(targetColor.r, targetColor.g, targetColor.b);
+        
+        if (swatch) swatch.style.backgroundColor = hex;
+        if (info) {
+             info.innerHTML = `
+                <span style="font-weight: 600;">${hex}</span>
+                <span>R:${targetColor.r} G:${targetColor.g} B:${targetColor.b}</span>
+             `;
+        }
+        
+        // Find similar colors
+        const allColors = window.getAllColors();
+        let candidateColors = [];
+        const selectedIds = window.getSelectedColorIds();
+        if (selectedIds && selectedIds.size > 0) {
+             candidateColors = allColors.filter(c => selectedIds.has(c.id));
+        } else {
+            candidateColors = allColors; 
+        }
+
+        const withDistance = candidateColors.map(c => {
+            const dist = this.colorDistance(targetColor, c.rgb);
+            // Max distance in RGB is sqrt(255^2 * 3) ≈ 441.67
+            const similarity = Math.max(0, 100 * (1 - dist / 442)).toFixed(1);
+            return { ...c, dist, similarity };
+        });
+        
+        withDistance.sort((a, b) => a.dist - b.dist);
+        const top10 = withDistance.slice(0, 10);
+        
+        // Render list
+        const list = document.getElementById('similarColorsList');
+        if (list) {
+            if (top10.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>没有找到匹配的颜色</p></div>';
+            } else {
+                list.innerHTML = top10.map(c => {
+                    const displayId = window.getDisplayId ? window.getDisplayId(c, this.colorSystem) : c.id;
+                    return `
+                    <div class="similar-color-item">
+                        <div class="similar-color-swatch" style="background-color: ${c.hex}"></div>
+                        <div class="similar-color-info">
+                            <span class="similar-color-code">${displayId}</span>
+                        </div>
+                        <div class="similarity-score">${c.similarity}%</div>
+                    </div>
+                `}).join('');
+            }
+        }
     }
 
     // 移除 getMedianColor 方法，因为不再需要
