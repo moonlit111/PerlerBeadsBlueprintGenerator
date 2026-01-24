@@ -1635,7 +1635,10 @@ select:focus {
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-lg);
     background: white;
+    /* 关键：确保缩放时像素清晰锐利，实现矢量般的无损放大体验 */
     image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
     cursor: crosshair;
     transition: none;
     transform-origin: center center;

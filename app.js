@@ -15,6 +15,10 @@ class PerlerBeadApp {
         this.isGenerated = false;
         this.history = [];
         this.historyIndex = -1;
+        // 图片历史记录栈
+        this.imageHistory = [];
+        this.imageHistoryIndex = -1;
+        
         this.lockGridRatio = false;
         this.gridRatio = 1;
         this.panOffsetX = 0;
@@ -268,6 +272,7 @@ class PerlerBeadApp {
         bindClick('resizeBtn', () => this.toggleResizeMode());
         bindClick('confirmResizeBtn', () => this.confirmResize());
         bindClick('cancelResizeBtn', () => this.cancelResize());
+        bindClick('undoImageBtn', () => this.undoImageProcess());
         
         // 缩放比例滑块
         const resizeScale = document.getElementById('resizeScale');
@@ -924,10 +929,53 @@ class PerlerBeadApp {
                 if (img.width < 100 || img.height < 100) {
                     this.showToast('图片尺寸较小，建议放大以获得更好效果', 'info');
                 }
+                
+                // Clear image history on new upload
+                this.imageHistory = [];
+                this.imageHistoryIndex = -1;
+                this.saveImageState(); // Save initial state
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+    }
+    
+    // 旋转图片
+    rotateImage(direction) {
+        if (!this.uploadedImage) return;
+        
+        const canvas = document.createElement('canvas');
+        if (direction === 'left' || direction === 'right') {
+            canvas.width = this.uploadedImage.height;
+            canvas.height = this.uploadedImage.width;
+        } else {
+            canvas.width = this.uploadedImage.width;
+            canvas.height = this.uploadedImage.height;
+        }
+        
+        const ctx = canvas.getContext('2d');
+        const w = this.uploadedImage.width;
+        const h = this.uploadedImage.height;
+        
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        
+        if (direction === 'left') {
+            ctx.rotate(-90 * Math.PI / 180);
+        } else if (direction === 'right') {
+            ctx.rotate(90 * Math.PI / 180);
+        }
+        
+        ctx.drawImage(this.uploadedImage, -w / 2, -h / 2);
+        
+        const newImg = new Image();
+        newImg.onload = () => {
+            this.uploadedImage = newImg;
+            this.initCanvasWithImage();
+            
+            // Save state for undo
+            this.saveImageState();
+        };
+        newImg.src = canvas.toDataURL();
     }
 
     showCanvas() {
@@ -993,6 +1041,9 @@ class PerlerBeadApp {
         this.mainCanvas.width = width;
         this.mainCanvas.height = height;
         
+        // 关键：禁用平滑处理，确保像素风格清晰锐利（配合 CSS 的 image-rendering: pixelated）
+        this.ctx.imageSmoothingEnabled = false;
+        
         // 重置网格选择状态，因为图片尺寸已改变
         this.nineGridState = { x: 0, y: 0, width: 0, height: 0 };
         
@@ -1008,6 +1059,71 @@ class PerlerBeadApp {
         setTimeout(() => {
             this.fitImageToView();
         }, 50);
+        
+        // 每次初始化画布（意味着图片改变）时，保存状态
+        // 注意：initCanvasWithImage 可能被多次调用（如缩放、裁剪后），需要区分是初始化还是修改
+        // 这里我们在具体操作（如缩放、裁剪、旋转）完成后手动调用 saveImageState 更可控
+        // 或者在这里调用，但要注意避免重复保存。
+        // 由于 handleImageUpload 中已经手动保存了初始状态，这里我们不自动保存，
+        // 而是让各个操作方法在修改 this.uploadedImage 后调用 saveImageState。
+    }
+    
+    // 图片处理历史记录管理
+    saveImageState() {
+        if (!this.uploadedImage) return;
+        
+        // 如果当前不在历史记录末尾（即进行了撤销操作），则丢弃后面的记录
+        if (this.imageHistoryIndex < this.imageHistory.length - 1) {
+            this.imageHistory = this.imageHistory.slice(0, this.imageHistoryIndex + 1);
+        }
+        
+        // 保存图片数据的副本 (DataURL)
+        const canvas = document.createElement('canvas');
+        canvas.width = this.uploadedImage.width;
+        canvas.height = this.uploadedImage.height;
+        canvas.getContext('2d').drawImage(this.uploadedImage, 0, 0);
+        
+        // 限制历史记录数量，防止内存溢出
+        if (this.imageHistory.length >= 10) {
+            this.imageHistory.shift();
+            this.imageHistoryIndex--;
+        }
+        
+        this.imageHistory.push(canvas.toDataURL());
+        this.imageHistoryIndex++;
+        
+        this.updateUndoImageBtn();
+    }
+    
+    undoImageProcess() {
+        if (this.imageHistoryIndex <= 0) return; // 至少保留初始图片
+        
+        this.imageHistoryIndex--;
+        const dataUrl = this.imageHistory[this.imageHistoryIndex];
+        
+        const img = new Image();
+        img.onload = () => {
+            this.uploadedImage = img;
+            this.initCanvasWithImage(); // Re-render
+            this.updateUndoImageBtn();
+            this.showToast('已撤销上一步操作', 'info');
+        };
+        img.src = dataUrl;
+    }
+    
+    updateUndoImageBtn() {
+        const btn = document.getElementById('undoImageBtn');
+        if (btn) {
+            // 如果索引大于0，说明有操作可以撤销（索引0是原始图片）
+            btn.disabled = this.imageHistoryIndex <= 0;
+            if (btn.disabled) {
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            } else {
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+        }
     }
     
     getMaxZoom() {
@@ -1517,6 +1633,9 @@ class PerlerBeadApp {
             this.initCanvasWithImage();
             this.cancelResize();
             this.showToast(`图片缩放为 ${w}x${h}`, 'success');
+            
+            // Save state for undo
+            this.saveImageState();
         };
         newImg.src = canvas.toDataURL();
     }
@@ -1568,6 +1687,9 @@ class PerlerBeadApp {
             this.uploadedImage = newImg;
             this.cancelCrop(); // cancelCrop already handles overlayMask
             this.initCanvasWithImage();
+            
+            // Save state for undo
+            this.saveImageState();
         };
         newImg.src = cropCanvas.toDataURL();
     }
@@ -1623,6 +1745,9 @@ class PerlerBeadApp {
             this.uploadedImage = newImg;
             this.cancelContrast();
             this.initCanvasWithImage();
+            
+            // Save state for undo
+            this.saveImageState();
         };
         newImg.src = canvas.toDataURL();
     }
@@ -1983,10 +2108,10 @@ class PerlerBeadApp {
         this.gridOverlay.style.height = `${scaledH}px`;
         
         // 计算缩放后的偏移和单元格尺寸
-        const scaledOffsetX = offsetX * scale;
-        const scaledOffsetY = offsetY * scale;
-        const scaledCellWidth = cellWidth * scale;
-        const scaledCellHeight = cellHeight * scale;
+        // const scaledOffsetX = offsetX * scale;
+        // const scaledOffsetY = offsetY * scale;
+        // const scaledCellWidth = cellWidth * scale;
+        // const scaledCellHeight = cellHeight * scale;
         
         // 清空现有网格线
         this.gridOverlay.innerHTML = '';
@@ -1996,7 +2121,9 @@ class PerlerBeadApp {
         
         // 绘制垂直线
         for (let col = 0; col <= cols; col++) {
-            const x = scaledOffsetX + col * scaledCellWidth;
+            // 恢复使用浮点数计算，让浏览器/Canvas处理对齐
+            const rawX = offsetX + col * cellWidth;
+            const x = rawX * scale;
             if (x >= -1 && x <= scaledW + 1) {
                 const line = document.createElement('div');
                 line.className = 'grid-line grid-line-v';
@@ -2007,7 +2134,9 @@ class PerlerBeadApp {
         
         // 绘制水平线
         for (let row = 0; row <= rows; row++) {
-            const y = scaledOffsetY + row * scaledCellHeight;
+            // 恢复使用浮点数计算，让浏览器/Canvas处理对齐
+            const rawY = offsetY + row * cellHeight;
+            const y = rawY * scale;
             if (y >= -1 && y <= scaledH + 1) {
                 const line = document.createElement('div');
                 line.className = 'grid-line grid-line-h';
@@ -2188,6 +2317,9 @@ class PerlerBeadApp {
         
         this.ctx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
         
+        // 确保绘制清晰
+        this.ctx.imageSmoothingEnabled = false;
+        
         // Determine what to render
         let showSourceImage = false;
 
@@ -2223,22 +2355,47 @@ class PerlerBeadApp {
             // 网格线已改为使用游离式 CSS 覆盖层绘制，在 updateGridOverlay() 中处理
         } else if (this.colorGrid.length > 0) {
             // 绘制颜色单元格 (Pixel Art) - 不再在 canvas 上绘制网格线
+            // 使用离屏 Canvas 绘制 1x1 像素，然后拉伸显示，解决网格不等间距问题
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = cols;
+            tempCanvas.height = rows;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // 构造 ImageData
+            const imgData = tempCtx.createImageData(cols, rows);
+            const data = imgData.data;
+            
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     const cell = this.colorGrid[row][col];
-                    const x = offsetX + col * cellWidth;
-                    const y = offsetY + row * cellHeight;
+                    const index = (row * cols + col) * 4;
                     
                     if (cell && cell.color) {
-                        this.ctx.fillStyle = cell.color.hex;
-                        this.ctx.fillRect(x, y, cellWidth, cellHeight);
+                        const { r, g, b } = cell.color.rgb;
+                        data[index] = r;
+                        data[index + 1] = g;
+                        data[index + 2] = b;
+                        data[index + 3] = 255;
                     } else {
-                        // Empty/White
-                        this.ctx.fillStyle = '#ffffff';
-                        this.ctx.fillRect(x, y, cellWidth, cellHeight);
+                        // White
+                        data[index] = 255;
+                        data[index + 1] = 255;
+                        data[index + 2] = 255;
+                        data[index + 3] = 255;
                     }
                 }
             }
+            
+            tempCtx.putImageData(imgData, 0, 0);
+            
+            // 拉伸绘制到主 Canvas
+            // 注意：cellWidth/Height 是浮点数，drawImage 会处理对齐
+            this.ctx.imageSmoothingEnabled = false;
+            this.ctx.drawImage(
+                tempCanvas, 
+                0, 0, cols, rows,
+                offsetX, offsetY, cols * cellWidth, rows * cellHeight
+            );
         }
         
         this.updateUsedColorsPalette();
@@ -3144,9 +3301,27 @@ class PerlerBeadApp {
                     const displayId = window.getDisplayId(cell.color, this.colorSystem);
                     if (displayId) {
                         ctx.fillStyle = '#000000';
-                        ctx.font = `${Math.max(10, cellSize / 3)}px Arial`;
+                        // 加粗，并计算最大可能的字体大小 (cellHeight 的 0.6 倍，留出边距)
+                        const fontSize = Math.max(10, cellSize * 0.6);
+                        ctx.font = `bold ${fontSize}px Arial`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
+                        
+                        // 确保文字宽度不超过格子宽度
+                        const metrics = ctx.measureText(displayId);
+                        const maxTextWidth = cellSize * 0.9; // 留出左右边距
+                        
+                        if (metrics.width > maxTextWidth) {
+                            // 如果文字太宽，缩小字体
+                            const scale = maxTextWidth / metrics.width;
+                            ctx.font = `bold ${fontSize * scale}px Arial`;
+                        }
+                        
+                        // 描边以增加对比度 (白色描边)
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = Math.max(2, fontSize * 0.08); // 描边宽度随字体大小动态调整
+                        ctx.strokeText(displayId, x + cellSize / 2, y + cellSize / 2);
+                        
                         ctx.fillText(displayId, x + cellSize / 2, y + cellSize / 2);
                     }
                 }
