@@ -509,6 +509,38 @@ body.dark-mode .btn-upload-large:hover {
         0 0 80px rgba(0, 240, 255, 0.3);
 }
 
+/* SVG 图标通用样式 */
+.icon-svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    display: inline-block;
+    transition: fill 0.2s ease;
+}
+
+/* 默认状态（亮色模式）为深灰色 */
+.tool-btn {
+    color: var(--text-secondary);
+}
+
+/* 激活或悬停状态为蓝色 */
+.tool-btn.active,
+.tool-btn:hover {
+    color: var(--accent-color);
+}
+
+/* 暗色模式下 */
+body.dark-mode .tool-btn {
+    color: rgba(255, 255, 255, 0.85); /* 默认为白色 */
+}
+
+/* 暗色模式下的激活/悬停状态为霓虹蓝 */
+body.dark-mode .tool-btn.active,
+body.dark-mode .tool-btn:hover {
+    color: var(--neon-cyan);
+    /* box-shadow 已经在 .tool-btn 定义中处理了，这里只改变文字颜色 */
+}
+
 /* 霓虹信息栏 */
 body.dark-mode .canvas-info {
     background: rgba(10, 10, 18, 0.9);
