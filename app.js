@@ -195,9 +195,60 @@ class PerlerBeadApp {
         
         // 消息提示
         this.toastContainer = document.querySelector('.toast-container');
+        
+        // 初始化页面文本
+        i18n.updatePage();
+        
+        // 更新语言选择器的高亮状态
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            if (item.dataset.lang === i18n.currentLang) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
     }
 
     initEventListeners() {
+        // 语言切换
+        const languageBtn = document.getElementById('languageBtn');
+        const languageMenu = document.getElementById('languageMenu');
+        const languageDropdown = document.getElementById('languageDropdown');
+
+        if (languageBtn && languageMenu) {
+            languageBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                languageMenu.classList.toggle('show');
+                languageBtn.classList.toggle('active');
+            });
+
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const lang = item.dataset.lang;
+                    if (i18n.setLanguage(lang)) {
+                        // 更新选中状态
+                        document.querySelectorAll('.dropdown-item').forEach(el => {
+                            el.classList.toggle('active', el.dataset.lang === lang);
+                        });
+                    }
+                    languageMenu.classList.remove('show');
+                    languageBtn.classList.remove('active');
+                });
+            });
+
+            // 点击外部关闭下拉菜单
+            document.addEventListener('click', (e) => {
+                if (languageDropdown && !languageDropdown.contains(e.target)) {
+                    languageMenu.classList.remove('show');
+                    languageBtn.classList.remove('active');
+                }
+            });
+        }
+        
+        window.addEventListener('languageChanged', () => {
+            this.updateDynamicText();
+        });
+
         // 辅助函数：安全绑定事件
         const bindClick = (id, handler) => {
             const el = document.getElementById(id);
@@ -214,7 +265,7 @@ class PerlerBeadApp {
             tab.addEventListener('click', () => {
                 const ws = tab.dataset.ws;
                 if (ws === 'editing' && !this.isGenerated) {
-                    this.showToast('请先生成图纸', 'info');
+                    this.showToast(i18n.t('msg_generate_first'), 'info');
                     return;
                 }
                 this.switchWorkspace(ws);
@@ -305,7 +356,7 @@ class PerlerBeadApp {
         if (this.resizeWidth && this.resizeHeight) {
             this.resizeWidth.addEventListener('input', () => {
                 const isLocked = document.getElementById('resizeLockRatio').classList.contains('active');
-                if (isLocked && this.uploadedImage) {
+                if (this.uploadedImage) {
                     const w = parseInt(this.resizeWidth.value);
                     if (w > 0) {
                         const ratio = this.uploadedImage.width / this.uploadedImage.height;
@@ -319,7 +370,7 @@ class PerlerBeadApp {
                                 // resizeScale.value = scale; // 可选：不自动更新滑块位置以免干扰输入
                                 if (resizeScaleValue) resizeScaleValue.textContent = scale.toFixed(1) + 'x';
                             } else {
-                                if (resizeScaleValue) resizeScaleValue.textContent = '自定义';
+                                if (resizeScaleValue) resizeScaleValue.textContent = i18n.t('text_custom');
                             }
                         }
                     }
@@ -339,7 +390,7 @@ class PerlerBeadApp {
                             if (scale >= 0.1 && scale <= 5) {
                                 if (resizeScaleValue) resizeScaleValue.textContent = scale.toFixed(1) + 'x';
                             } else {
-                                if (resizeScaleValue) resizeScaleValue.textContent = '自定义';
+                                if (resizeScaleValue) resizeScaleValue.textContent = i18n.t('text_custom');
                             }
                         }
                     }
@@ -744,7 +795,7 @@ class PerlerBeadApp {
     // 移除背景功能
     removeBackground() {
         if (!this.isGenerated || !this.colorGrid.length) {
-            this.showToast('请先生成图纸', 'info');
+            this.showToast(i18n.t('msg_generate_first'), 'info');
             return;
         }
         
@@ -781,7 +832,7 @@ class PerlerBeadApp {
         }
 
         if (queue.length === 0) {
-            this.showToast('边缘未检测到预设背景色(T1/H1)', 'info');
+            this.showToast(i18n.t('msg_bg_not_detected'), 'info');
             return;
         }
 
@@ -819,9 +870,9 @@ class PerlerBeadApp {
         if (removedCount > 0) {
             this.saveState();
             this.redrawCanvas();
-            this.showToast(`已移除 ${removedCount} 个背景格子`, 'success');
+            this.showToast(i18n.t('msg_bg_removed', { count: removedCount }), 'success');
         } else {
-            this.showToast('未找到可移除的背景区域', 'info');
+            this.showToast(i18n.t('msg_bg_not_found'), 'info');
         }
     }
 
@@ -927,7 +978,7 @@ class PerlerBeadApp {
                 
                 // Check image size
                 if (img.width < 100 || img.height < 100) {
-                    this.showToast('图片尺寸较小，建议放大以获得更好效果', 'info');
+                    this.showToast(i18n.t('msg_img_too_small'), 'info');
                 }
                 
                 // Clear image history on new upload
@@ -2506,7 +2557,7 @@ class PerlerBeadApp {
                 break;
             case 'replace': {
                 if (!this.selectedColor) {
-                    this.showToast('请先选择一个颜色', 'info');
+                    this.showToast(i18n.t('msg_select_color_first'), 'info');
                     return;
                 }
                 const targetCell = this.colorGrid[row][col];
@@ -2575,7 +2626,7 @@ class PerlerBeadApp {
     // 分析颜色
     analyzeColors() {
         if (!this.uploadedImage || !this.gridData) {
-            this.showToast('请先上传图片', 'error');
+            this.showToast(i18n.t('msg_upload_first'), 'error');
             return;
         }
         
@@ -2632,7 +2683,7 @@ class PerlerBeadApp {
             if (btn) {
                 btn.classList.add('active');
                 const span = btn.querySelector('span');
-                if (span) span.textContent = '显示原图';
+                if (span) span.textContent = i18n.t('btn_show_original');
             }
         };
         updateCompareBtn(this.toggleCompareBtn);
@@ -2806,7 +2857,7 @@ class PerlerBeadApp {
         const list = document.getElementById('similarColorsList');
         if (list) {
             if (top10.length === 0) {
-                list.innerHTML = '<div class="empty-state"><p>没有找到匹配的颜色</p></div>';
+                list.innerHTML = `<div class="empty-state"><p>${i18n.t('msg_no_match_color')}</p></div>`;
             } else {
                 list.innerHTML = top10.map(c => {
                     const displayId = window.getDisplayId ? window.getDisplayId(c, this.colorSystem) : c.id;
@@ -2842,7 +2893,7 @@ class PerlerBeadApp {
     // 调色板管理
     updateUsedColorsPalette() {
         if (!this.colorGrid.length) {
-            this.paletteUsed.innerHTML = '<div class="empty-state"><p>暂无使用的颜色</p></div>';
+            this.paletteUsed.innerHTML = `<div class="empty-state"><p>${i18n.t('msg_no_used_colors')}</p></div>`;
             this.updateCurrentColorDisplay();
             return;
         }
@@ -2857,7 +2908,7 @@ class PerlerBeadApp {
         });
         
         if (usedColors.size === 0) {
-            this.paletteUsed.innerHTML = '<div class="empty-state"><p>暂无使用的颜色</p></div>';
+            this.paletteUsed.innerHTML = `<div class="empty-state"><p>${i18n.t('msg_no_used_colors')}</p></div>`;
             this.updateCurrentColorDisplay();
             return;
         }
@@ -2968,7 +3019,7 @@ class PerlerBeadApp {
         });
         
         if (sortedAllColors.length === 0) {
-            html = '<div class="empty-state"><p>未选择任何颜色</p></div>';
+            html = `<div class="empty-state"><p>${i18n.t('msg_no_used_colors')}</p></div>`;
         }
         
         this.allColorsGrid.innerHTML = html;
@@ -3110,14 +3161,14 @@ class PerlerBeadApp {
         } else {
             swatch.style.background = 'transparent';
             swatch.style.borderColor = 'var(--border-color)';
-            codeEl.textContent = '未选择';
+            codeEl.textContent = i18n.t('label_color_code');
             displayEl.classList.add('empty');
         }
     }
 
     updateColorStats() {
         if (!this.colorGrid.length) {
-            this.colorStats.innerHTML = '<div class="empty-state"><p>暂无统计数据</p></div>';
+            this.colorStats.innerHTML = `<div class="empty-state"><p>${i18n.t('msg_no_stats')}</p></div>`;
             document.getElementById('colorCountInfo').textContent = '0';
             return;
         }
@@ -3138,7 +3189,7 @@ class PerlerBeadApp {
         document.getElementById('colorCountInfo').textContent = colorCount.size;
         
         if (colorCount.size === 0) {
-            this.colorStats.innerHTML = '<div class="empty-state"><p>暂无统计数据</p></div>';
+            this.colorStats.innerHTML = `<div class="empty-state"><p>${i18n.t('msg_no_stats')}</p></div>`;
             return;
         }
         
@@ -3218,7 +3269,7 @@ class PerlerBeadApp {
     }
 
     clearCanvas() {
-        if (!confirm('确定要清空画布吗？')) return;
+        if (!confirm(i18n.t('msg_confirm_clear'))) return;
         
         this.colorGrid.forEach(row => {
             row.forEach(cell => {
@@ -3242,7 +3293,7 @@ class PerlerBeadApp {
 
     handleExport(mode) {
         if (!this.colorGrid.length) {
-            alert('请先创建或编辑图案');
+            alert(i18n.t('msg_create_pattern_first'));
             return;
         }
 
@@ -3422,7 +3473,7 @@ class PerlerBeadApp {
         ctx.font = `${Math.max(14, Math.round(18 * scale))}px Arial`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        ctx.fillText('颜色统计', x, y);
+        ctx.fillText(i18n.t('text_color_stats'), x, y);
 
         const startY = y + titleHeight;
 
@@ -3528,7 +3579,7 @@ class PerlerBeadApp {
 
     copyCanvasToClipboard(canvas) {
         if (!navigator.clipboard || !canvas) {
-            alert('当前浏览器不支持复制图片到剪贴板');
+            alert(i18n.t('msg_clipboard_unsupported'));
             return;
         }
 
@@ -3536,10 +3587,10 @@ class PerlerBeadApp {
             if (!blob) return;
             const item = new ClipboardItem({ 'image/png': blob });
             navigator.clipboard.write([item]).then(() => {
-                alert('已复制到剪贴板');
+                alert(i18n.t('msg_copied'));
                 this.hideExportModal();
             }).catch(() => {
-                alert('复制失败，请检查权限');
+                alert(i18n.t('msg_copy_failed'));
             });
         });
     }
@@ -3584,12 +3635,12 @@ class PerlerBeadApp {
             const groupSelected = colors.filter(c => selectedIds.has(c.id)).length;
             html += `<div class="color-group" data-group="${group}">`;
             html += `  <div class="group-header">`;
-            html += `    <button class="group-toggle" data-group="${group}">► ${group} 系列</button>`;
+            html += `    <button class="group-toggle" data-group="${group}">► ${group} ${i18n.t('text_series')}</button>`;
             html += `    <div class="group-meta">
                             <span class="group-count">${groupSelected}/${colors.length}</span>
                             <div class="group-actions">
-                                <button class="btn-tertiary group-select" data-group="${group}" data-action="select">本组全选</button>
-                                <button class="btn-tertiary group-select" data-group="${group}" data-action="clear">本组全不选</button>
+                                <button class="btn-tertiary group-select" data-group="${group}" data-action="select">${i18n.t('btn_group_select_all')}</button>
+                                <button class="btn-tertiary group-select" data-group="${group}" data-action="clear">${i18n.t('btn_group_deselect_all')}</button>
                             </div>
                         </div>`;
             html += `  </div>`;
@@ -3708,7 +3759,7 @@ class PerlerBeadApp {
     // 框选网格功能
     startGridSelection() {
         if (!this.uploadedImage) {
-            this.showToast('请先上传图片', 'error');
+            this.showToast(i18n.t('msg_upload_first'), 'error');
             return;
         }
         this.closeMobileMenus();
@@ -3801,7 +3852,6 @@ class PerlerBeadApp {
     // 移动端交互适配
     initMobileInteractions() {
         const leftPanel = document.querySelector('.left-panel');
-        const toggleLeft = document.getElementById('toggleLeftPanel');
         
         // 创建遮罩层
         let overlay = document.querySelector('.panel-overlay');
@@ -3814,24 +3864,9 @@ class PerlerBeadApp {
         const togglePanel = (panel, show) => {
             panel.classList.toggle('show', show);
             
-            // 更新按钮状态
-            if (panel === leftPanel && toggleLeft) {
-                toggleLeft.classList.toggle('active', show);
-            }
-
             const anyVisible = leftPanel.classList.contains('show');
             overlay.classList.toggle('show', anyVisible);
         };
-        
-        if (toggleLeft) {
-            toggleLeft.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // 强制移除 show 类以确保切换状态正常，不依赖上传图片
-                togglePanel(leftPanel, !leftPanel.classList.contains('show'));
-            });
-            // 确保按钮初始状态可用
-            toggleLeft.disabled = false;
-        }
         
         // 点击遮罩层关闭面板
         overlay.addEventListener('click', () => {
@@ -3852,11 +3887,9 @@ class PerlerBeadApp {
     closeMobileMenus() {
         const leftPanel = document.querySelector('.left-panel');
         const overlay = document.querySelector('.panel-overlay');
-        const toggleLeft = document.getElementById('toggleLeftPanel');
 
         if (leftPanel) leftPanel.classList.remove('show');
         if (overlay) overlay.classList.remove('show');
-        if (toggleLeft) toggleLeft.classList.remove('active');
     }
 
     // 消息提示
@@ -3887,6 +3920,35 @@ class PerlerBeadApp {
                 }
             }, 300);
         }, 3000);
+    }
+
+    updateDynamicText() {
+        // 更新语言选择器的高亮状态
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            if (item.dataset.lang === i18n.currentLang) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+        
+        // 如果颜色选择模态框是打开的，重新渲染它以更新文本
+        if (this.colorSelectModal && this.colorSelectModal.style.display !== 'none') {
+            this.renderColorSelectList();
+        } else {
+            // 否则只更新摘要
+            this.updateSelectionSummary();
+        }
+
+        // 更新对比按钮文本
+        const updateBtnText = (btn) => {
+            if (btn && btn.classList.contains('active')) {
+                const span = btn.querySelector('span');
+                if (span) span.textContent = i18n.t('btn_show_original');
+            }
+        };
+        updateBtnText(this.toggleCompareBtn);
+        updateBtnText(this.toggleCompareBtnSidebar);
     }
 
     onSelectionMouseDown() {}

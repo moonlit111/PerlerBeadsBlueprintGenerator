@@ -12,26 +12,34 @@
         <div class="toolbar-left">
             <div class="logo">
                 <span class="logo-icon">🎨</span>
-                <span class="logo-text">拼豆图纸工坊</span>
+                <span class="logo-text" data-i18n="app_title">拼豆图纸工坊</span>
             </div>
         </div>
         
         <div class="workspace-tabs">
-        <button class="ws-tab active" data-ws="generation">图纸生成</button>
-        <button class="ws-tab" data-ws="editing">图纸编辑</button>
-        <button class="ws-tab" data-ws="identify">颜色识别</button>
+        <button class="ws-tab active" data-ws="generation" data-i18n="tab_generation">图纸生成</button>
+        <button class="ws-tab" data-ws="editing" data-i18n="tab_editing">图纸编辑</button>
+        <button class="ws-tab" data-ws="identify" data-i18n="tab_identify">颜色识别</button>
     </div>
 
         <div class="toolbar-right">
-            <button class="toolbar-btn icon-only mobile-toggle" id="toggleLeftPanel" title="显示工具">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-                <span class="mobile-label">工具</span>
-            </button>
-            <button class="toolbar-btn icon-only" id="themeToggle" title="切换主题">
+            <div class="language-dropdown" id="languageDropdown">
+                <button class="toolbar-btn icon-only" id="languageBtn" title="选择语言" data-i18n-title="label_language">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="languageMenu">
+                    <button class="dropdown-item" data-lang="zh-CN">简体中文</button>
+                    <button class="dropdown-item" data-lang="zh-TW">繁體中文 (台灣)</button>
+                    <button class="dropdown-item" data-lang="zh-HK">繁體中文 (香港)</button>
+                    <button class="dropdown-item" data-lang="en">English</button>
+                    <button class="dropdown-item" data-lang="ja">日本語</button>
+                </div>
+            </div>
+            <button class="toolbar-btn icon-only" id="themeToggle" title="切换主题" data-i18n-title="toolbar_theme">
                 <svg class="theme-icon-sun" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="5"></circle>
                     <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -115,13 +123,13 @@
                         </div>
                         <!-- 裁剪确认操作栏，默认隐藏 -->
                         <div class="crop-actions" id="cropActions" style="display: none; margin-top: 10px;">
-                            <button class="btn-primary btn-full" id="confirmCropBtn">确认裁剪</button>
-                            <button class="btn-secondary btn-full" id="cancelCropBtn" style="margin-top: 5px;">取消</button>
+                            <button class="btn-primary btn-full" id="confirmCropBtn" data-i18n="btn_confirm_crop">确认裁剪</button>
+                            <button class="btn-secondary btn-full" id="cancelCropBtn" style="margin-top: 5px;" data-i18n="btn_cancel">取消</button>
                         </div>
                         <!-- 缩放操作栏，默认隐藏 -->
                         <div class="process-actions" id="resizeActions" style="display: none; margin-top: 10px;">
                             <div class="control-item">
-                                <label>缩放比例 (倍)</label>
+                                <label data-i18n="label_scale_ratio">缩放比例 (倍)</label>
                                 <div class="slider-control">
                                     <input type="range" id="resizeScale" min="0.1" max="5" value="1" step="0.1">
                                     <span id="resizeScaleValue">1.0x</span>
@@ -129,7 +137,7 @@
                             </div>
                             
                             <div class="control-item">
-                                <label>目标宽度 (px)</label>
+                                <label data-i18n="label_target_width">目标宽度 (px)</label>
                                 <div class="slider-control">
                                     <input type="range" id="resizeWidthSlider" min="1" max="5000" value="100" step="1" style="display: none;">
                                     <input type="number" id="resizeWidth" class="number-inline" min="1" step="1" style="width: 100%;">
@@ -148,7 +156,7 @@
                             </div>
 
                             <div class="control-item">
-                                <label>目标高度 (px)</label>
+                                <label data-i18n="label_target_height">目标高度 (px)</label>
                                 <div class="slider-control">
                                     <input type="range" id="resizeHeightSlider" min="1" max="5000" value="100" step="1" style="display: none;">
                                     <input type="number" id="resizeHeight" class="number-inline" min="1" step="1" style="width: 100%;">
@@ -156,28 +164,28 @@
                             </div>
 
                             <div class="control-item">
-                                <label>缩放算法</label>
+                                <label data-i18n="label_resize_algo">缩放算法</label>
                                 <select id="resizeAlgorithm" class="select-clean">
-                                    <option value="smooth">平滑 (Bilinear)</option>
-                                    <option value="pixelated">像素化 (Nearest)</option>
+                                    <option value="smooth" data-i18n="algo_smooth">平滑 (Bilinear)</option>
+                                    <option value="pixelated" data-i18n="algo_pixelated">像素化 (Nearest)</option>
                                 </select>
                             </div>
                             <div class="grid-actions-grid" style="margin-top: 8px;">
-                                <button class="btn-primary btn-full" id="confirmResizeBtn">确认</button>
-                                <button class="btn-secondary btn-full" id="cancelResizeBtn">取消</button>
+                                <button class="btn-primary btn-full" id="confirmResizeBtn" data-i18n="btn_confirm">确认</button>
+                                <button class="btn-secondary btn-full" id="cancelResizeBtn" data-i18n="btn_cancel">取消</button>
                             </div>
                         </div>
                         <!-- 对比度调节操作栏，默认隐藏 -->
                         <div class="process-actions" id="contrastActions" style="display: none; margin-top: 10px;">
                             <div class="control-item">
-                                <label>对比度: <span id="contrastValueDisplay">0</span></label>
+                                <label><span data-i18n="label_contrast">对比度</span>: <span id="contrastValueDisplay">0</span></label>
                                 <div class="slider-control">
                                     <input type="range" id="contrastSlider" min="-100" max="100" value="0" step="1">
                                 </div>
                             </div>
                             <div class="grid-actions-grid" style="margin-top: 8px;">
-                                <button class="btn-primary btn-full" id="confirmContrastBtn">确认</button>
-                                <button class="btn-secondary btn-full" id="cancelContrastBtn">取消</button>
+                                <button class="btn-primary btn-full" id="confirmContrastBtn" data-i18n="btn_confirm">确认</button>
+                                <button class="btn-secondary btn-full" id="cancelContrastBtn" data-i18n="btn_cancel">取消</button>
                             </div>
                         </div>
                     </div>
@@ -186,19 +194,19 @@
                 <!-- 网格设置 -->
                 <div class="sidebar-section scroll-anim anim-right" id="gridSettingsSection">
                     <div class="section-header collapsible" data-target="gridControls">
-                        <h3 class="section-title">网格设置</h3>
+                        <h3 class="section-title" data-i18n="section_grid_settings">网格设置</h3>
                         <span class="collapse-icon">▼</span>
                     </div>
                     <div class="section-content" id="gridControls">
                         <div class="control-item">
-                            <label>框选网格大小 (NxN)</label>
+                            <label data-i18n="label_grid_select_size">框选网格大小 (NxN)</label>
                             <div class="slider-control">
                                 <input type="range" id="gridSelectionSize" min="1" max="10" value="3" step="1">
                                 <span id="gridSelectionSizeValue">3</span>
                             </div>
                         </div>
                         <div class="control-item">
-                            <label>网格宽度(px/格) (A/D)</label>
+                            <label data-i18n="label_grid_width">网格宽度(px/格) (A/D)</label>
                             <div class="slider-control">
                                 <input type="range" id="gridCols" min="1" max="500" value="40" step="0.2">
                                 <input type="number" id="gridColsInput" min="1" max="2000" value="40" step="0.01" class="number-inline" inputmode="decimal">
@@ -218,28 +226,28 @@
                         </div>
 
                         <div class="control-item">
-                            <label>网格高度(px/格) (W/S)</label>
+                            <label data-i18n="label_grid_height">网格高度(px/格) (W/S)</label>
                             <div class="slider-control">
                                 <input type="range" id="gridRows" min="1" max="500" value="40" step="0.2">
                                 <input type="number" id="gridRowsInput" min="1" max="2000" value="40" step="0.01" class="number-inline" inputmode="decimal">
                             </div>
                         </div>
                         <div class="control-item">
-                            <label>横轴偏移(px) (Ctrl ←/→)</label>
+                            <label data-i18n="label_offset_x">横轴偏移(px) (Ctrl ←/→)</label>
                             <div class="slider-control">
                                 <input type="range" id="gridOffsetX" min="-50" max="50" value="0" step="0.05">
                                 <input type="number" id="gridOffsetXInput" min="-50" max="50" value="0" step="0.01" class="number-inline" inputmode="decimal">
                             </div>
                         </div>
                         <div class="control-item">
-                            <label>纵轴偏移(px) (Ctrl ↑/↓)</label>
+                            <label data-i18n="label_offset_y">纵轴偏移(px) (Ctrl ↑/↓)</label>
                             <div class="slider-control">
                                 <input type="range" id="gridOffsetY" min="-50" max="50" value="0" step="0.05">
                                 <input type="number" id="gridOffsetYInput" min="-50" max="50" value="0" step="0.01" class="number-inline" inputmode="decimal">
                             </div>
                         </div>
                         <div class="control-item compact-inline">
-                            <label class="inline">高精度偏移</label>
+                            <label class="inline" data-i18n="label_high_precision">高精度偏移</label>
                             <label class="toggle toggle-small">
                                 <input type="checkbox" id="offsetHighPrecision">
                                 <span class="toggle-slider"></span>
@@ -251,7 +259,7 @@
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                     <path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path>
                                 </svg>
-                                <span>框选网格</span>
+                                <span data-i18n="btn_select_grid">框选网格</span>
                             </button>
                         </div>
                     </div>
@@ -260,12 +268,12 @@
                 <!-- 视图与处理 -->
                 <div class="sidebar-section scroll-anim anim-right">
                     <div class="section-header collapsible" data-target="processControls">
-                        <h3 class="section-title">视图与处理</h3>
+                        <h3 class="section-title" data-i18n="section_view_process">视图与处理</h3>
                         <span class="collapse-icon">▼</span>
                     </div>
                     <div class="section-content" id="processControls">
                         <div class="control-item">
-                            <label>缩放比例</label>
+                            <label data-i18n="label_zoom">缩放比例</label>
                             <div class="zoom-controls">
                                 <button class="btn-zoom" id="zoomOut">-</button>
                                 <span id="zoomValue">100%</span>
@@ -275,7 +283,7 @@
                         <div class="divider"></div>
                         <div class="control-item">
                             <label class="label-with-tooltip">
-                                识别方式
+                                <span data-i18n="label_detect_method">识别方式</span>
                                 <span class="tooltip-icon" title="平均颜色：计算格内所有像素的平均RGB值&#10;主导颜色：选择格内出现次数最多的颜色">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="10"></circle>
@@ -285,14 +293,14 @@
                                 </span>
                             </label>
                             <select id="colorMethod" class="select-clean">
-                                <option value="dominant">主导颜色</option>
-                                <option value="average">平均颜色</option>
+                                <option value="dominant" data-i18n="method_dominant">主导颜色</option>
+                                <option value="average" data-i18n="method_average">平均颜色</option>
                             </select>
                         </div>
                         <div class="divider"></div>
                         <div class="control-item">
                             <label class="label-with-tooltip">
-                                颜色合并阈值
+                                <span data-i18n="label_merge_threshold">颜色合并阈值</span>
                                 <span class="tooltip-icon" title="基于颜色相似度合并连通区域：&#10;1. 识别相似度小于阈值的连通区域&#10;2. 将区域统一设为出现最多的色号">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="10"></circle>
@@ -310,7 +318,7 @@
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;">
                                 <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
                             </svg>
-                            <span>颜色合并</span>
+                            <span data-i18n="btn_merge_colors">颜色合并</span>
                         </button>
                         <!-- 生成按钮组 -->
                         <div class="gen-action-buttons" style="margin-top: 15px; display: none; flex-direction: column; gap: 10px;">
@@ -319,7 +327,7 @@
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
                                 </svg>
-                                <span>对比原图/图纸</span>
+                                <span data-i18n="btn_compare">对比原图/图纸</span>
                             </button>
                             <button class="btn-primary btn-full" id="sendToEditBtnSidebar">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 5px;">
@@ -329,7 +337,7 @@
                                     <line x1="16" y1="17" x2="8" y2="17"></line>
                                     <polyline points="10 9 9 9 8 9"></polyline>
                                 </svg>
-                                <span>生成并编辑</span>
+                                <span data-i18n="btn_gen_and_edit">生成并编辑</span>
                             </button>
                         </div>
                     </div>
@@ -340,22 +348,22 @@
             <div id="edit-sidebar-content" style="display: none;">
                 <div class="sidebar-section">
                      <div class="section-header">
-                        <h3 class="section-title">调色板</h3>
+                        <h3 class="section-title" data-i18n="section_palette">调色板</h3>
                          <div class="current-color" id="currentColorDisplay">
                             <span class="color-swatch"></span>
-                            <span class="color-code" style="font-size: 12px;">未选择</span>
+                            <span class="color-code" style="font-size: 12px;" data-i18n="label_color_code">未选择</span>
                         </div>
                     </div>
                     
                     <div class="palette-tabs">
-                        <button class="palette-tab active" data-tab="used">使用的颜色</button>
-                        <button class="palette-tab" data-tab="all">全部颜色</button>
-                        <button class="palette-tab" data-tab="stats">颜色统计</button>
+                        <button class="palette-tab active" data-tab="used" data-i18n="tab_used_colors">使用的颜色</button>
+                        <button class="palette-tab" data-tab="all" data-i18n="tab_all_colors">全部颜色</button>
+                        <button class="palette-tab" data-tab="stats" data-i18n="tab_stats">颜色统计</button>
                     </div>
 
                     <div class="palette-content" id="paletteUsed">
                         <div class="empty-state">
-                            <p>暂无使用的颜色</p>
+                            <p data-i18n="msg_no_used_colors">暂无使用的颜色</p>
                         </div>
                     </div>
 
@@ -366,7 +374,7 @@
                     <div class="palette-content" id="paletteStats" style="display: none;">
                         <div class="stats-content" id="colorStats">
                             <div class="empty-state">
-                                <p>暂无统计数据</p>
+                                <p data-i18n="msg_no_stats">暂无统计数据</p>
                             </div>
                         </div>
                     </div>
@@ -377,22 +385,22 @@
             <div id="identify-sidebar-content" style="display: none;">
                 <div class="sidebar-section">
                      <div class="section-header">
-                        <h3 class="section-title">颜色识别结果</h3>
+                        <h3 class="section-title" data-i18n="section_identify_result">颜色识别结果</h3>
                      </div>
                      <div class="section-content">
                         <div class="picked-color-display" id="pickedColorPreview">
                             <div class="picked-color-swatch" id="pickedColorSwatch" style="background-color: transparent;"></div>
                             <div class="picked-color-values" id="pickedColorInfo">
-                                <span style="font-weight: 600;">点击画布取色</span>
+                                <span style="font-weight: 600;" data-i18n="msg_pick_color">点击画布取色</span>
                                 <span>-</span>
                             </div>
                         </div>
                         
                         <div class="divider"></div>
-                        <label>最接近的颜色</label>
+                        <label data-i18n="label_closest_color">最接近的颜色</label>
                         <div id="similarColorsList" class="similar-colors-list">
                             <div class="empty-state">
-                                <p>点击画布任意位置识别颜色</p>
+                                <p data-i18n="msg_click_to_identify">点击画布任意位置识别颜色</p>
                             </div>
                         </div>
                      </div>
@@ -406,44 +414,44 @@
             <!-- 图纸生成顶部工具栏 -->
             <div class="top-bar-tools" id="genToolbar" style="display: none;">
                  <div class="toolbar-group">
-                    <button class="tool-btn" id="uploadBtnTop" title="上传图片">
+                    <button class="tool-btn" id="uploadBtnTop" title="上传图片" data-i18n-title="btn_upload">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="17 8 12 3 7 8"></polyline>
                             <line x1="12" y1="3" x2="12" y2="15"></line>
                         </svg>
-                        <span>上传图片</span>
+                        <span data-i18n="btn_upload">上传图片</span>
                     </button>
-                    <button class="tool-btn" id="analyzeColorsBtn" title="生成图纸">
+                    <button class="tool-btn" id="analyzeColorsBtn" title="生成图纸" data-i18n-title="btn_generate">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
-                        <span>生成图纸</span>
+                        <span data-i18n="btn_generate">生成图纸</span>
                     </button>
-                    <button class="tool-btn" id="selectColorsBtnTop" title="选择颜色">
+                    <button class="tool-btn" id="selectColorsBtnTop" title="选择颜色" data-i18n-title="btn_select_colors">
                         <svg class="icon-svg" viewBox="0 0 1024 1024" fill="currentColor">
                             <path d="M512.208754 1.445932C138.335648 1.445932 0 327.525522 0 510.344291c0 182.819792 130.339534 512.209778 501.294171 512.209777 43.163055 0 91.607394-13.579273 91.607394-64.704674 0-84.98865-80.691787-62.715367-80.691787-150.269445 0-38.660508 37.120432-66.662259 100.470249-66.662259 31.506575 0 149.880589 9.850345 222.337831-18.1248 72.459289-27.974122 189.400674-116.901477 189.400674-268.435728-0.001023-133.410476-138.376581-452.91123-512.209778-452.91123zM199.919239 512c-49.133024 0-88.927355-39.83424-88.927355-88.928379 0-49.130977 39.833217-88.966241 88.927355-88.96624 49.092092 0 88.927355 39.83424 88.927355 88.96624 0 49.094138-39.835264 88.928379-88.927355 88.928379z m167.806867-220.053812c-49.133024 0-88.927355-39.83424-88.927356-88.927355 0-49.133024 39.83424-88.927355 88.927356-88.927355s88.927355 39.794331 88.927355 88.927355c0.040932 49.093115-39.794331 88.927355-88.927355 88.927355z m285.260929 0c-49.092092 0-88.927355-39.83424-88.927355-88.927355 0-49.133024 39.83424-88.927355 88.927355-88.927355 49.094138 0 88.927355 39.794331 88.927355 88.927355-0.001023 49.093115-39.833217 88.927355-88.927355 88.927355z m169.344896 220.053812c-49.094138 0-88.927355-39.83424-88.927355-88.928379 0-49.130977 39.833217-88.966241 88.927355-88.96624 49.133024 0 88.966241 39.83424 88.966241 88.96624 0 49.094138-39.833217 88.928379-88.966241 88.928379z"></path>
                         </svg>
-                        <span>选择颜色</span>
+                        <span data-i18n="btn_select_colors">选择颜色</span>
                     </button>
                 </div>
                 <div class="toolbar-divider"></div>
                 <div class="toolbar-group">
-                    <button class="tool-btn" id="toggleCompareBtn" title="对比原图">
+                    <button class="tool-btn" id="toggleCompareBtn" title="对比原图" data-i18n-title="btn_compare">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect>
                             <line x1="12" y1="3" x2="12" y2="21"></line>
                             <path d="M16 8l2 2-2 2"></path>
                             <path d="M8 16l-2-2 2-2"></path>
                         </svg>
-                        <span>对比原图/图纸</span>
+                        <span data-i18n="btn_compare">对比原图/图纸</span>
                     </button>
-                     <button class="tool-btn" id="sendToEditBtn" title="发送到编辑区">
+                     <button class="tool-btn" id="sendToEditBtn" title="发送到编辑区" data-i18n-title="btn_send_to_edit">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
-                        <span>发送到编辑区</span>
+                        <span data-i18n="btn_send_to_edit">发送到编辑区</span>
                     </button>
                 </div>
             </div>
@@ -451,37 +459,37 @@
             <!-- 图纸编辑顶部工具栏 -->
             <div class="top-bar-tools" id="editToolbar" style="display: none;">
                 <div class="toolbar-group">
-                    <button class="tool-btn" data-tool="pan" title="拖动">
+                    <button class="tool-btn" data-tool="pan" title="拖动" data-i18n-title="tool_pan">
                         <svg class="icon-svg" viewBox="0 0 1024 1024" fill="currentColor">
                             <path d="M182.300135 869.154709C128.320822 816.857678 32.577027 731.427004 31.699315 730.549292l-0.731427-0.658285a99.839786 99.839786 0 0 1 0.658284-145.18826 105.10606 105.10606 0 0 1 132.022575-10.093693l112.786044 53.686743a0.731427 0.731427 0 0 0 1.023997-0.877713L173.011012 270.189135a98.742646 98.742646 0 0 1 2.633137-63.780434c7.972554-20.479956 22.089096-37.741633 40.959913-49.590751 27.794226-17.407963 60.269585-21.94281 88.795238-12.434259 28.525653 9.581694 51.419318 32.621644 62.537009 63.049007l45.494759 124.562019a0.731427 0.731427 0 0 0 1.462854-0.219428V97.279792C414.893922 43.666192 459.364684 0 514.22171 0c26.111944 0 50.761034 9.801122 69.485565 27.721083 18.651389 17.773676 29.25708 41.764482 29.842222 67.291285l2.925708 200.337856a0.731427 0.731427 0 0 0 1.462854 0.219428l41.837624-133.704856c10.459406-29.183937 33.206786-51.273033 62.463867-61.439868a103.862635 103.862635 0 0 1 87.624955 8.996552 99.912929 99.912929 0 0 1 43.519906 117.83289l-52.29703 154.331098a0.731427 0.731427 0 0 0 1.170283 0.731427l51.785032-57.41702c20.260528-20.479956 43.88562-32.182788 68.754138-34.157641 24.941661-1.974853 49.29818 5.851416 70.655849 22.381666 41.691339 32.694787 28.671939 79.725543 28.671938 120.612313 0 40.813627-44.617047 235.812066-99.40093 344.721547-28.086797 55.881023-70.802134 117.320891-128.146011 184.246463A175.542481 175.542481 0 0 1 661.31168 1023.997806H443.712146a234.056641 234.056641 0 0 1-153.526528-57.343877c-46.811328-40.667341-82.651251-73.1427-107.885483-97.49922z m50.90732-52.516459c24.063948 23.259379 59.099302 54.857025 104.959775 94.79294 29.25708 25.45366 66.779285 39.423916 105.544916 39.423915h217.599534a1 1 0 0 0 0-2z"></path>
                         </svg>
                     </button>
-                    <button class="tool-btn active" data-tool="brush" title="画笔">
+                    <button class="tool-btn active" data-tool="brush" title="画笔" data-i18n-title="tool_brush">
                         <svg class="icon-svg" viewBox="0 0 1024 1024" fill="currentColor">
                             <path d="M745.76 369.86l-451 537.48a18.693 18.693 0 0 1-8.46 5.74l-136.58 45.27c-13.24 4.39-26.46-6.71-24.43-20.5l20.86-142.36c0.5-3.44 1.95-6.67 4.19-9.33l451-537.48c6.65-7.93 18.47-8.96 26.4-2.31l115.71 97.1c7.92 6.64 8.96 18.46 2.31 26.39zM894.53 192.56l-65.9 78.53c-6.65 7.93-18.47 8.96-26.4 2.31l-115.71-97.1c-7.93-6.65-8.96-18.47-2.31-26.4l65.9-78.53c6.65-7.93 18.47-8.96 26.4-2.31l115.71 97.1c7.93 6.65 8.96 18.47 2.31 26.4z"></path>
                         </svg>
                     </button>
-                    <button class="tool-btn" data-tool="bucket" title="油漆桶">
+                    <button class="tool-btn" data-tool="bucket" title="油漆桶" data-i18n-title="tool_bucket">
                         <svg class="icon-svg" viewBox="0 0 1024 1024" fill="currentColor">
                             <path d="M462.272 163.904l316.736 316.8-361.984 361.984-316.8-316.736L462.272 163.904M417.024 118.656 54.912 480.704c-25.088 25.024-25.088 65.472 0 90.496l316.8 316.736c25.024 25.088 65.408 25.088 90.496 0l361.984-361.984c25.024-25.024 25.024-65.472 0-90.496L507.52 118.656C482.496 93.632 441.984 93.632 417.024 118.656L417.024 118.656zM54.912 571.2l316.8 316.736c25.024 25.088 65.408 25.088 90.496 0l361.984-361.984c12.48-12.48 18.816-28.864 18.752-45.248L54.912 480.704C29.888 505.664 29.888 546.176 54.912 571.2zM145.408 73.344c-12.48 12.544-12.48 32.768 0 45.248L439.616 412.8c12.48 12.48 32.768 12.48 45.248 0l0 0c12.48-12.48 12.48-32.768 0-45.248L190.656 73.344C178.176 60.864 157.952 60.864 145.408 73.344L145.408 73.344zM869.696 525.312c0 0-117.696 181.696-128 256-17.6 126.784 64 141.696 128 141.696s140.48-14.272 128-141.696C990.976 713.024 869.696 525.312 869.696 525.312z"></path>
                         </svg>
                     </button>
-                    <button class="tool-btn" data-tool="replace" title="替换同色">
+                    <button class="tool-btn" data-tool="replace" title="替换同色" data-i18n-title="tool_replace">
                         <svg class="icon-svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.44.84.7 1.79.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z"/>
                         </svg>
                     </button>
-                    <button class="tool-btn" data-tool="eraser" title="橡皮擦">
+                    <button class="tool-btn" data-tool="eraser" title="橡皮擦" data-i18n-title="tool_eraser">
                         <svg class="icon-svg" viewBox="0 0 1024 1024" fill="currentColor">
                             <path d="M987.7 428.36L582.9 82.72 73.68 679.13l280.25 239.32 18.1-0.18h477.26v-93.09H648.88L987.7 428.36zM204.9 668.77l178.15-208.64 263.22 224.75-118.44 138.7L387.88 825 204.9 668.77z"></path>
                         </svg>
                     </button>
-                    <button class="tool-btn" data-tool="eyedropper" title="吸管">
+                    <button class="tool-btn" data-tool="eyedropper" title="吸管" data-i18n-title="tool_eyedropper">
                         <svg class="icon-svg" viewBox="0 0 1024 1024" fill="currentColor">
                             <path d="M951.808 53.833143l11.556571 10.825143c54.125714 56.758857 53.101714 146.285714-2.413714 201.874285l-124.708571 124.635429 60.562285 60.854857a57.417143 57.417143 0 0 1 0.365715 80.457143 55.661714 55.661714 0 0 1-72.411429 6.363429l-6.875428-5.851429-52.589715-52.955429-424.521143 409.965715-17.115428 15.945143c-29.769143 25.965714-69.997714 52.297143-121.417143 79.725714A128 128 0 0 1 31.451429 809.033143c33.206857-57.782857 62.537143-99.181714 89.965714-125.659429l428.470857-419.766857-53.174857-53.467428a57.417143 57.417143 0 0 1-0.438857-80.530286 55.661714 55.661714 0 0 1 72.411428-6.363429l6.875429 5.851429 61.732571 62.171428L766.317714 62.244571a137.728 137.728 0 0 1 185.490286-8.411428zM627.931429 340.845714L206.262857 753.883429l-15.067428 14.921142c-17.554286 19.017143-39.350857 50.834286-64.512 94.646858a18.285714 18.285714 0 0 0 24.137142 25.307428c50.249143-26.843429 86.528-51.346286 108.617143-72.777143l429.714286-414.939428-61.220571-60.196572z"></path>
                         </svg>
                     </button>
-                    <button class="tool-btn" id="removeBgBtn" title="移除背景">
+                    <button class="tool-btn" id="removeBgBtn" title="移除背景" data-i18n-title="tool_remove_bg">
                         <svg class="icon-svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M20 4H4v16h16V4zm-2 14H6V6h12v12z M8 8h4v4H8V8zm4 4h4v4h-4v-4z"/>
                         </svg>
@@ -489,26 +497,26 @@
                 </div>
                 <div class="toolbar-divider"></div>
                 <div class="toolbar-group">
-                    <button class="toolbar-btn icon-only" id="undoBtn" title="撤销" disabled>
+                    <button class="toolbar-btn icon-only" id="undoBtn" title="撤销" disabled data-i18n-title="tool_undo">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 7v6h6"></path>
                             <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
                         </svg>
                     </button>
-                    <button class="toolbar-btn icon-only" id="redoBtn" title="重做" disabled>
+                    <button class="toolbar-btn icon-only" id="redoBtn" title="重做" disabled data-i18n-title="tool_redo">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 7v6h-6"></path>
                             <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path>
                         </svg>
                     </button>
-                    <button class="toolbar-btn icon-only" id="exportBtn" title="导出图纸" disabled>
+                    <button class="toolbar-btn icon-only" id="exportBtn" title="导出图纸" disabled data-i18n-title="tool_export">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
                     </button>
-                    <button class="toolbar-btn icon-only" id="clearBtn" title="清空画布" disabled>
+                    <button class="toolbar-btn icon-only" id="clearBtn" title="清空画布" disabled data-i18n-title="tool_clear">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -527,9 +535,9 @@
                         <polyline points="17 8 12 3 7 8"></polyline>
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    <h2>上传图片开始创作</h2>
-                    <p>支持 JPG、PNG、GIF 格式</p>
-                    <button class="btn-upload-large" id="uploadBtnLarge">选择图片</button>
+                    <h2 data-i18n="welcome_title">上传图片开始创作</h2>
+                    <p data-i18n="welcome_desc">支持 JPG、PNG、GIF 格式</p>
+                    <button class="btn-upload-large" id="uploadBtnLarge" data-i18n="btn_select_image">选择图片</button>
                 </div>
             </div>
 
@@ -552,9 +560,9 @@
 
             <!-- 画布信息栏 -->
             <div class="canvas-info" id="canvasInfo" style="display: none;">
-                <span>画布大小: <strong id="canvasSizeInfo">29 × 29</strong></span>
+                <span><span data-i18n="info_canvas_size">画布大小</span>: <strong id="canvasSizeInfo">29 × 29</strong></span>
                 <span>|</span>
-                <span>颜色数: <strong id="colorCountInfo">0</strong></span>
+                <span><span data-i18n="info_color_count">颜色数</span>: <strong id="colorCountInfo">0</strong></span>
             </div>
         </main>
         </div>
@@ -567,13 +575,13 @@
         <div class="modal-overlay" id="colorSelectModalOverlay"></div>
         <div class="modal-dialog modal-large">
             <div class="modal-header">
-                <h2>选择拥有的颜色</h2>
+                <h2 data-i18n="modal_select_colors_title">选择拥有的颜色</h2>
                 <button class="btn-close" id="closeColorSelectBtn">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="modal-toolbar-row">
                     <div class="color-system-inline">
-                        <label for="colorSystem">色号系统</label>
+                        <label for="colorSystem" data-i18n="label_color_system">色号系统</label>
                         <select id="colorSystem" class="select-clean">
                             <option value="MARD">Mard</option>
                             <option value="COCO">COCO</option>
@@ -582,17 +590,17 @@
                             <option value="咪小窝">咪小窝</option>
                         </select>
                     </div>
-                    <div class="selection-count" id="colorCountSummary">已选 0 / 总计 0</div>
+                    <div class="selection-count" id="colorCountSummary"><span data-i18n="text_selected">已选</span> 0 / <span data-i18n="text_total">总计</span> 0</div>
                     <div class="selection-actions">
-                        <button class="btn-secondary" id="selectAllBtn">全选</button>
-                        <button class="btn-secondary" id="deselectAllBtn">取消全选</button>
+                        <button class="btn-secondary" id="selectAllBtn" data-i18n="btn_select_all">全选</button>
+                        <button class="btn-secondary" id="deselectAllBtn" data-i18n="btn_deselect_all">取消全选</button>
                     </div>
                 </div>
                 <div id="colorSelectList"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" id="cancelSelectBtn">取消</button>
-                <button class="btn-primary" id="confirmSelectBtn">确定</button>
+                <button class="btn-secondary" id="cancelSelectBtn" data-i18n="btn_cancel">取消</button>
+                <button class="btn-primary" id="confirmSelectBtn" data-i18n="btn_confirm">确定</button>
             </div>
         </div>
     </div>
@@ -602,12 +610,12 @@
         <div class="modal-overlay" id="exportModalOverlay"></div>
         <div class="modal-dialog export-dialog">
             <div class="modal-header export-header">
-                <h2>下载图纸设置</h2>
+                <h2 data-i18n="modal_export_title">下载图纸设置</h2>
                 <button class="btn-close" id="closeExportModal">&times;</button>
             </div>
             <div class="modal-body export-body">
                 <div class="export-row">
-                    <div class="export-label">显示网格线</div>
+                    <div class="export-label" data-i18n="label_show_grid">显示网格线</div>
                     <label class="toggle">
                         <input type="checkbox" id="exportShowGrid" checked>
                         <span class="toggle-slider"></span>
@@ -616,14 +624,14 @@
 
                 <div class="export-subgroup" id="gridOptions">
                     <div class="export-row">
-                        <div class="export-label">线条间隔</div>
+                        <div class="export-label" data-i18n="label_line_interval">线条间隔</div>
                         <div class="export-range">
                             <input type="range" id="exportGridInterval" min="1" max="20" value="1">
                             <span class="export-range-value" id="exportGridIntervalValue">1</span>
                         </div>
                     </div>
                     <div class="export-row">
-                        <div class="export-label">线条颜色</div>
+                        <div class="export-label" data-i18n="label_line_color">线条颜色</div>
                         <div class="export-color-row">
                             <div class="export-color-palette" id="exportColorPalette">
                                 <button class="color-dot selected" data-color="#666666" style="background:#666666"></button>
@@ -639,7 +647,7 @@
                 </div>
 
                 <div class="export-row">
-                    <div class="export-label">显示坐标</div>
+                    <div class="export-label" data-i18n="label_show_coords">显示坐标</div>
                     <label class="toggle">
                         <input type="checkbox" id="exportShowCoords" checked>
                         <span class="toggle-slider"></span>
@@ -648,7 +656,7 @@
 
                 <div class="export-subgroup" id="coordOptions">
                     <div class="export-row">
-                        <div class="export-label">坐标分度</div>
+                        <div class="export-label" data-i18n="label_coord_interval">坐标分度</div>
                         <div class="export-range">
                             <input type="range" id="exportCoordInterval" min="1" max="10" value="1">
                             <span class="export-range-value" id="exportCoordIntervalValue">1</span>
@@ -657,7 +665,7 @@
                 </div>
 
                 <div class="export-row">
-                    <div class="export-label">隐藏色号</div>
+                    <div class="export-label" data-i18n="label_hide_codes">隐藏色号</div>
                     <label class="toggle">
                         <input type="checkbox" id="exportHideCodes">
                         <span class="toggle-slider"></span>
@@ -665,7 +673,7 @@
                 </div>
 
                 <div class="export-row">
-                    <div class="export-label">包含统计</div>
+                    <div class="export-label" data-i18n="label_include_stats">包含统计</div>
                     <label class="toggle">
                         <input type="checkbox" id="exportIncludeStats" checked>
                         <span class="toggle-slider"></span>
@@ -674,14 +682,15 @@
 
             </div>
             <div class="modal-footer export-footer">
-                <button class="btn-secondary" id="exportCopy">复制到剪贴板</button>
-                <button class="btn-primary" id="exportDownload">下载图纸</button>
+                <button class="btn-secondary" id="exportCopy" data-i18n="btn_copy_clipboard">复制到剪贴板</button>
+                <button class="btn-primary" id="exportDownload" data-i18n="btn_download">下载图纸</button>
             </div>
         </div>
     </div>
 
     <div class="toast-container"></div>
     <script src="colors.js"></script>
+    <script src="i18n.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
