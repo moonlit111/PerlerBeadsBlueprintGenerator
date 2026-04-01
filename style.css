@@ -4,7 +4,7 @@
 
 /* 默认隐藏移动端切换按钮 */
 .mobile-toggle {
-    display: none;
+    display: none !important;
 }
 
 .mobile-label {
@@ -983,7 +983,7 @@ body.dark-mode .ws-tab.active {
 }
 
 .section-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--text-secondary);
     margin-bottom: 0;
@@ -1049,7 +1049,7 @@ body.dark-mode .ws-tab.active {
     justify-content: center;
     gap: 4px;
     padding: 6px 4px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     height: auto;
     min-height: 32px;
@@ -1342,7 +1342,7 @@ select:focus {
 }
 
 .control-item label {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-secondary);
     font-weight: 500;
 }
@@ -1487,7 +1487,7 @@ select:focus {
 }
 
 .grid-info {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
     margin-top: 4px;
 }
@@ -2013,7 +2013,7 @@ body.dark-mode .grid-overlay .grid-line {
 
 .stat-count {
     color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 13px;
     background: var(--bg-primary);
     padding: 2px 6px;
     border-radius: 10px;
@@ -2388,7 +2388,7 @@ body.dark-mode .grid-overlay .grid-line {
     border-radius: 8px;
     color: var(--text-primary);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     transition: all 0.2s ease;
 }
 
@@ -2419,7 +2419,7 @@ body.dark-mode .grid-overlay .grid-line {
 }
 
 .group-count {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
     min-width: 52px;
     text-align: right;
@@ -2505,7 +2505,7 @@ body.dark-mode .grid-overlay .grid-line {
 }
 
 .color-checkbox-item label span {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--text-primary);
 }
@@ -2553,7 +2553,7 @@ body.dark-mode .grid-overlay .grid-line {
     padding: 8px 12px;
     background: rgba(0, 0, 0, 0.85);
     color: white;
-    font-size: 12px;
+    font-size: 13px;
     border-radius: 6px;
     white-space: pre-wrap; /* Allow wrapping */
     width: 220px; /* Fixed width to fit in sidebar */
@@ -2986,12 +2986,12 @@ body.dark-mode .grid-overlay .grid-line {
 }
 
 .similar-color-name {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
 }
 
 .similarity-score {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--primary-color);
     background: rgba(var(--primary-rgb), 0.1);
