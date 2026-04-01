@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>拼豆图纸工坊</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -16,10 +16,10 @@
             </div>
         </div>
         
-        <div class="workspace-tabs">
-        <button class="ws-tab active" data-ws="generation" data-i18n="tab_generation">图纸生成</button>
-        <button class="ws-tab" data-ws="editing" data-i18n="tab_editing">图纸编辑</button>
-        <button class="ws-tab" data-ws="identify" data-i18n="tab_identify">颜色识别</button>
+        <div class="workspace-tabs" role="tablist">
+        <button class="ws-tab active" data-ws="generation" data-i18n="tab_generation" role="tab" aria-selected="true">图纸生成</button>
+        <button class="ws-tab" data-ws="editing" data-i18n="tab_editing" role="tab" aria-selected="false">图纸编辑</button>
+        <button class="ws-tab" data-ws="identify" data-i18n="tab_identify" role="tab" aria-selected="false">颜色识别</button>
     </div>
 
         <div class="toolbar-right">
@@ -59,7 +59,7 @@
     </header>
 
     <!-- 隐藏的文件输入 -->
-    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+    <input type="file" id="imageInput" accept="image/*" style="display: none;" aria-label="Upload image file">
 
     <!-- 主容器 -->
     <div class="main-container">

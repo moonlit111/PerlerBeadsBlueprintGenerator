@@ -128,7 +128,12 @@ const translations = {
         "text_color_stats": "颜色统计",
         "text_custom": "自定义",
         "msg_no_match_color": "没有找到匹配的颜色",
-        "btn_lock_ratio": "锁定宽高比例"
+        "btn_lock_ratio": "锁定宽高比例",
+        "msg_undo_success": "已撤销上一步操作",
+        "msg_invalid_size": "请输入有效的宽高",
+        "msg_resized_to": "图片缩放为 {w}x{h}",
+        "msg_switch_edit": "已切换到编辑模式",
+        "msg_analyze_failed": "图片分析失败"
     },
     "en": {
         "app_title": "Perler Beads Blueprint Generator",
@@ -251,7 +256,12 @@ const translations = {
         "text_color_stats": "Color Statistics",
         "text_custom": "Custom",
         "msg_no_match_color": "No matching color found",
-        "btn_lock_ratio": "Lock Aspect Ratio"
+        "btn_lock_ratio": "Lock Aspect Ratio",
+        "msg_undo_success": "Undo successful",
+        "msg_invalid_size": "Please enter valid dimensions",
+        "msg_resized_to": "Image resized to {w}x{h}",
+        "msg_switch_edit": "Switched to edit mode",
+        "msg_analyze_failed": "Image analysis failed"
     },
     "zh-TW": {
         "app_title": "拼豆圖紙工坊",
@@ -344,7 +354,10 @@ const translations = {
         "text_total": "總計",
         "btn_select_all": "全選",
         "btn_deselect_all": "取消全選",
-        
+        "text_series": "系列",
+        "btn_group_select_all": "本組全選",
+        "btn_group_deselect_all": "本組全不選",
+
         "modal_export_title": "下載圖紙設定",
         "label_show_grid": "顯示網格線",
         "label_line_interval": "線條間隔",
@@ -371,7 +384,12 @@ const translations = {
         "text_color_stats": "顏色統計",
         "text_custom": "自定義",
         "msg_no_match_color": "沒有找到匹配的顏色",
-        "btn_lock_ratio": "鎖定寬高比例"
+        "btn_lock_ratio": "鎖定寬高比例",
+        "msg_undo_success": "已撤銷上一步操作",
+        "msg_invalid_size": "請輸入有效的寬高",
+        "msg_resized_to": "圖片縮放為 {w}x{h}",
+        "msg_switch_edit": "已切換到編輯模式",
+        "msg_analyze_failed": "圖片分析失敗"
     },
     "zh-HK": {
         "app_title": "拼豆圖紙工坊",
@@ -464,7 +482,10 @@ const translations = {
         "text_total": "總計",
         "btn_select_all": "全選",
         "btn_deselect_all": "取消全選",
-        
+        "text_series": "系列",
+        "btn_group_select_all": "本組全選",
+        "btn_group_deselect_all": "本組全不選",
+
         "modal_export_title": "下載圖紙設定",
         "label_show_grid": "顯示網格線",
         "label_line_interval": "線條間隔",
@@ -474,7 +495,29 @@ const translations = {
         "label_hide_codes": "隱藏色號",
         "label_include_stats": "包含統計",
         "btn_copy_clipboard": "複製到剪貼簿",
-        "btn_download": "下載圖紙"
+        "btn_download": "下載圖紙",
+
+        "msg_generate_first": "請先產生圖紙",
+        "msg_bg_not_detected": "邊緣未偵測到預設背景色(T1/H1)",
+        "msg_bg_removed": "已移除 {count} 個背景格仔",
+        "msg_bg_not_found": "搵唔到可以移除嘅背景區域",
+        "msg_upload_first": "請先上傳圖片",
+        "msg_img_too_small": "圖片尺寸太細，建議放大以獲得更好效果",
+        "msg_select_color_first": "請先揀一個顏色",
+        "msg_create_pattern_first": "請先建立或編輯圖案",
+        "msg_clipboard_unsupported": "目前嘅瀏覽器唔支援複製圖片到剪貼簿",
+        "msg_copied": "已複製到剪貼簿",
+        "msg_copy_failed": "複製失敗，請檢查權限",
+        "msg_confirm_clear": "確定要清空畫布嗎？",
+        "text_color_stats": "顏色統計",
+        "text_custom": "自訂",
+        "msg_no_match_color": "搵唔到匹配嘅顏色",
+        "btn_lock_ratio": "鎖定長闊比例",
+        "msg_undo_success": "已復原上一步操作",
+        "msg_invalid_size": "請輸入有效嘅長闊",
+        "msg_resized_to": "圖片縮放為 {w}x{h}",
+        "msg_switch_edit": "已切換到編輯模式",
+        "msg_analyze_failed": "圖片分析失敗"
     },
     "ja": {
         "app_title": "アイロンビーズ図案作成",
@@ -597,7 +640,12 @@ const translations = {
         "text_color_stats": "色統計",
         "text_custom": "カスタム",
         "msg_no_match_color": "一致する色が見つかりません",
-        "btn_lock_ratio": "縦横比を固定"
+        "btn_lock_ratio": "縦横比を固定",
+        "msg_undo_success": "操作を取り消しました",
+        "msg_invalid_size": "有効なサイズを入力してください",
+        "msg_resized_to": "画像を {w}x{h} にリサイズしました",
+        "msg_switch_edit": "編集モードに切り替えました",
+        "msg_analyze_failed": "画像分析に失敗しました"
     }
 };
 

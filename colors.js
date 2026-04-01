@@ -653,15 +653,39 @@ const colorCodeMapping = {
   ZG8: { COCO: 'GB8', 漫漫: 'ZG8', 盼盼: '261', 咪小窝: 'ZG8' }
 };
 
-  // 获取所有颜色的扁平数组
+  // 缓存所有颜色的扁平数组
+  let _allColorsCache = null;
+
+  // 获取所有颜色的扁平数组（带缓存）
   function getAllColors() {
+    if (_allColorsCache) return _allColorsCache;
     const allColors = [];
     for (const group in mard221Colors) {
       mard221Colors[group].forEach(color => {
         allColors.push({ ...color, group });
       });
     }
+    _allColorsCache = allColors;
     return allColors;
+  }
+
+  // 颜色查找缓存：量化 RGB 空间到 8 级，缓存最近色
+  let _nearestColorCache = null;
+
+  function getNearestColorCache() {
+    if (_nearestColorCache) return _nearestColorCache;
+    const cache = new Map();
+    const allColors = getAllColors();
+    // 将 RGB 各通道量化为 8 级 (0-7)，共 512 个桶
+    const quantize = (v) => Math.min(7, Math.floor(v / 32));
+    allColors.forEach(color => {
+      const key = (quantize(color.rgb.r) << 6) | (quantize(color.rgb.g) << 3) | quantize(color.rgb.b);
+      if (!cache.has(key)) {
+        cache.set(key, color);
+      }
+    });
+    _nearestColorCache = cache;
+    return cache;
   }
   
   // 计算两个颜色之间的欧氏距离（RGB空间）
