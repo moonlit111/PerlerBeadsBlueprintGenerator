@@ -749,6 +749,17 @@ class PerlerBeadApp {
         bindClick('exportCopy', () => this.handleExport('copy'));
         bindClick('exportDownload', () => this.handleExport('download'));
 
+        // ESC 键关闭模态框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (this.exportModal && this.exportModal.style.display !== 'none') {
+                    this.hideExportModal();
+                } else if (this.colorSelectModal && this.colorSelectModal.classList.contains('active')) {
+                    this.hideColorSelectModal();
+                }
+            }
+        });
+
         if (this.exportGridInterval) {
             this.exportGridInterval.addEventListener('input', () => {
                 const val = parseInt(this.exportGridInterval.value, 10) || 1;
@@ -1859,11 +1870,9 @@ class PerlerBeadApp {
         
         // Update Tabs
         this.workspaceTabs.forEach(tab => {
-            if (tab.dataset.ws === workspace) {
-                tab.classList.add('active');
-            } else {
-                tab.classList.remove('active');
-            }
+            const isActive = tab.dataset.ws === workspace;
+            tab.classList.toggle('active', isActive);
+            tab.setAttribute('aria-selected', isActive);
         });
 
         // Toggle UI Panels
@@ -3332,16 +3341,22 @@ class PerlerBeadApp {
 
     // 导出
     showExportModal() {
-        if (this.exportModal) this.exportModal.style.display = 'flex';
+        if (this.exportModal) {
+            this.exportModal.style.display = 'flex';
+            requestAnimationFrame(() => this.exportModal.classList.add('active'));
+        }
     }
 
     hideExportModal() {
-        if (this.exportModal) this.exportModal.style.display = 'none';
+        if (this.exportModal) {
+            this.exportModal.classList.remove('active');
+            setTimeout(() => { this.exportModal.style.display = 'none'; }, 300);
+        }
     }
 
     handleExport(mode) {
         if (!this.colorGrid.length) {
-            alert(i18n.t('msg_create_pattern_first'));
+            this.showToast(i18n.t('msg_create_pattern_first'), 'warning');
             return;
         }
 
@@ -3628,21 +3643,21 @@ class PerlerBeadApp {
 
     copyCanvasToClipboard(canvas) {
         if (!navigator.clipboard || !canvas) {
-            alert(i18n.t('msg_clipboard_unsupported'));
+            this.showToast(i18n.t('msg_clipboard_unsupported'), 'error');
             return;
         }
 
         canvas.toBlob((blob) => {
             if (!blob) {
-                alert(i18n.t('msg_copy_failed') || 'Copy failed');
+                this.showToast(i18n.t('msg_copy_failed') || 'Copy failed', 'error');
                 return;
             }
             const item = new ClipboardItem({ 'image/png': blob });
             navigator.clipboard.write([item]).then(() => {
-                alert(i18n.t('msg_copied'));
+                this.showToast(i18n.t('msg_copied'), 'success');
                 this.hideExportModal();
             }).catch(() => {
-                alert(i18n.t('msg_copy_failed'));
+                this.showToast(i18n.t('msg_copy_failed'), 'error');
             });
         });
     }
@@ -3659,10 +3674,12 @@ class PerlerBeadApp {
     showColorSelectModal() {
         this.renderColorSelectList();
         this.colorSelectModal.style.display = 'flex';
+        requestAnimationFrame(() => this.colorSelectModal.classList.add('active'));
     }
 
     hideColorSelectModal() {
-        this.colorSelectModal.style.display = 'none';
+        this.colorSelectModal.classList.remove('active');
+        setTimeout(() => { this.colorSelectModal.style.display = 'none'; }, 300);
     }
 
     renderColorSelectList() {
@@ -3907,7 +3924,7 @@ class PerlerBeadApp {
     // 移动端交互适配
     initMobileInteractions() {
         const leftPanel = document.querySelector('.left-panel');
-        
+
         // 创建遮罩层
         let overlay = document.querySelector('.panel-overlay');
         if (!overlay) {
@@ -3915,13 +3932,26 @@ class PerlerBeadApp {
             overlay.className = 'panel-overlay';
             document.body.appendChild(overlay);
         }
-        
+
         const togglePanel = (panel, show) => {
             panel.classList.toggle('show', show);
-            
+
             const anyVisible = leftPanel.classList.contains('show');
             overlay.classList.toggle('show', anyVisible);
+
+            // 同步 mobile-toggle 按钮状态
+            const mobileToggle = document.getElementById('mobileToggle');
+            if (mobileToggle) mobileToggle.classList.toggle('active', anyVisible);
         };
+
+        // 移动端面板切换按钮
+        const mobileToggle = document.getElementById('mobileToggle');
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', () => {
+                const isVisible = leftPanel.classList.contains('show');
+                togglePanel(leftPanel, !isVisible);
+            });
+        }
         
         // 点击遮罩层关闭面板
         overlay.addEventListener('click', () => {
@@ -3945,9 +3975,11 @@ class PerlerBeadApp {
     closeMobileMenus() {
         const leftPanel = document.querySelector('.left-panel');
         const overlay = document.querySelector('.panel-overlay');
+        const mobileToggle = document.getElementById('mobileToggle');
 
         if (leftPanel) leftPanel.classList.remove('show');
         if (overlay) overlay.classList.remove('show');
+        if (mobileToggle) mobileToggle.classList.remove('active');
     }
 
     // 消息提示
@@ -3965,6 +3997,11 @@ class PerlerBeadApp {
         toast.innerHTML = `${icon}<span>${message}</span>`;
         
         this.toastContainer.appendChild(toast);
+
+        // 限制 toast 数量，超过 3 个时移除最早的
+        while (this.toastContainer.children.length > 3) {
+            this.toastContainer.removeChild(this.toastContainer.firstChild);
+        }
         
         // 强制重绘以触发过渡
         toast.offsetHeight;
@@ -3991,7 +4028,7 @@ class PerlerBeadApp {
         });
         
         // 如果颜色选择模态框是打开的，重新渲染它以更新文本
-        if (this.colorSelectModal && this.colorSelectModal.style.display !== 'none') {
+        if (this.colorSelectModal && this.colorSelectModal.classList.contains('active')) {
             this.renderColorSelectList();
         } else {
             // 否则只更新摘要

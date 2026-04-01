@@ -14,13 +14,19 @@
 
 :root {
     --bg-primary: #ffffff;
+    --bg-primary-solid: #ffffff;
     --bg-secondary: #f3f4f6;
     --bg-tertiary: #e5e7eb;
+    --bg-hover: #f0f0f0;
     --text-primary: #111827;
     --text-secondary: #4b5563;
     --border-color: #e5e7eb;
     --accent-color: #f97316;
     --accent-hover: #ea580c;
+    --primary-color: #f97316;
+    --primary-rgb: 249, 115, 22;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    --toolbar-bg-end: #f9fafb;
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -32,20 +38,24 @@ body.dark-mode {
     /* 黑曜石背景色系 */
     --bg-primary: rgba(12, 12, 18, 0.85);
     --bg-primary-solid: #0c0c12;
+    --bg-hover: rgba(255, 255, 255, 0.08);
     --toolbar-bg-end: rgba(8, 8, 14, 0.9);
     --bg-secondary: #06060a;
     --bg-tertiary: rgba(25, 25, 35, 0.7);
-    
+
     /* 高对比度文字 */
     --text-primary: #e8e8f0;
     --text-secondary: #8888a0;
-    
+
     /* 霓虹色系 */
     --neon-cyan: #00f0ff;
     --neon-magenta: #ff00ff;
     --neon-purple: #8b5cf6;
     --accent-color: #00f0ff;
     --accent-hover: #00d4e0;
+    --primary-color: #00f0ff;
+    --primary-rgb: 0, 240, 255;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     
     /* 玻璃边框 */
     --border-color: rgba(0, 240, 255, 0.15);
@@ -132,8 +142,7 @@ body.dark-mode .toolbar-btn:hover:not(:disabled)::after {
 }
 
 /* 玻璃变形侧边栏 */
-body.dark-mode .left-panel,
-body.dark-mode .right-panel {
+body.dark-mode .left-panel {
     background: rgba(8, 8, 14, 0.85);
     backdrop-filter: blur(20px) saturate(150%);
     -webkit-backdrop-filter: blur(20px) saturate(150%);
@@ -143,11 +152,6 @@ body.dark-mode .right-panel {
 body.dark-mode .left-panel {
     border-right: 1px solid rgba(0, 240, 255, 0.1);
     box-shadow: 4px 0 30px rgba(0, 0, 0, 0.4);
-}
-
-body.dark-mode .right-panel {
-    border-left: 1px solid rgba(0, 240, 255, 0.1);
-    box-shadow: -4px 0 30px rgba(0, 0, 0, 0.4);
 }
 
 /* 玻璃变形区块 */
@@ -740,7 +744,7 @@ body {
     left: 50%;
     width: 0;
     height: 0;
-    background: rgba(var(--accent-color), 0.1);
+    background: rgba(var(--primary-rgb), 0.1);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     transition: width 0.3s, height 0.3s;
@@ -761,6 +765,18 @@ body {
 
 .toolbar-btn:active:not(:disabled) {
     transform: translateY(1px);
+}
+
+/* 键盘焦点可见性 */
+.toolbar-btn:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-close:focus-visible,
+.btn-icon:focus-visible,
+.ws-tab:focus-visible,
+.dropdown-item:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
 }
 
 .toolbar-btn:disabled {
@@ -793,11 +809,6 @@ body {
     font-size: 14px;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.toolbar-select:focus {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
 }
 
 .edit-guard {
@@ -952,31 +963,6 @@ body.dark-mode .ws-tab.active {
 .cursor-pan { cursor: grab; }
 .cursor-pan:active { cursor: grabbing; }
 
-/* 画笔光标 - Adobe Style Solid Pen */
-.cursor-brush { 
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="black" stroke="white" stroke-width="1"><path d="M20.71,3.29a1,1,0,0,0-1.42,0l-1.66,1.66L20.66,8l1.65-1.66a1,1,0,0,0,0-1.41ZM3,17.25V21H6.75L17.81,9.94,14.06,6.19,3,17.25Z"/></svg>') 0 24, crosshair; 
-}
-
-/* 油漆桶光标 - Solid Bucket */
-.cursor-bucket { 
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="black" stroke="white" stroke-width="1"><path d="M19.14,7.57l-6.7-6.7a2,2,0,0,0-2.83,0L3.29,7.19a2,2,0,0,0,0,2.83L8,14.73l-4.22,4.22a2,2,0,0,0,0,2.83L6.59,24.6a2,2,0,0,0,2.83,0L13.63,20.4l4.71,4.71a2,2,0,0,0,2.83,0l6.7-6.7a2,2,0,0,0,0-2.83L19.14,7.57ZM15,19l-3.29-3.3,9.17-9.17,3.29,3.3Z"/><circle cx="5" cy="18" r="2" fill="black" stroke="white" stroke-width="1"/></svg>') 2 22, crosshair; 
-}
-
-/* 替换光标 - Magic Wand */
-.cursor-replace { 
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="black" stroke="white" stroke-width="1"><path d="M19.29,7.12l-4.41-4.41a2,2,0,0,0-2.83,0L2,12.76l7.24,7.24L19.29,10A2,2,0,0,0,19.29,7.12ZM7.83,18.59,3.41,14.17l8.49-8.49,4.42,4.42Z"/><path d="M17.5,14a1,1,0,0,0-1,1v2h-2a1,1,0,0,0,0,2h2v2a1,1,0,0,0,2,0v-2h2a1,1,0,0,0,0-2h-2V15A1,1,0,0,0,17.5,14Z"/><circle cx="20" cy="4" r="1.5"/><circle cx="15" cy="2" r="1"/></svg>') 2 22, crosshair; 
-}
-
-/* 橡皮擦光标 - Solid Block */
-.cursor-eraser { 
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="black" stroke="white" stroke-width="1"><path d="M15.14,3a2,2,0,0,0-1.41.59L2.59,14.73a2,2,0,0,0,0,2.83l5.65,5.66a2,2,0,0,0,1.42.58H22v-2H11.07L19.38,10.07l2-2.07a2,2,0,0,0,0-2.83L16.55,3.59A2,2,0,0,0,15.14,3ZM10.5,19.67,4.83,14l7.07-7.07,5.66,5.66Z"/></svg>') 4 20, crosshair; 
-}
-
-/* 吸管光标 - Solid Dropper */
-.cursor-eyedropper { 
-    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="black" stroke="white" stroke-width="1"><path d="M20.71,5.63l-2.34-2.34a1,1,0,0,0-1.41,0l-3.13,3.13,3.75,3.75,3.13-3.13A1,1,0,0,0,20.71,5.63ZM5.29,14.22l-1.06,5.6a1,1,0,0,0,1.17,1.17l5.6-1.06L16.22,14.7,12.47,11Z"/></svg>') 2 22, crosshair; 
-}
-
 /* 侧边栏样式优化 */
 .left-panel {
     background: var(--bg-primary);
@@ -994,23 +980,6 @@ body.dark-mode .ws-tab.active {
 
 .sidebar-section:last-child {
     border-bottom: none;
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    background: var(--bg-secondary);
-    transition: background 0.2s ease;
-}
-
-.section-header.collapsible {
-    cursor: pointer;
-}
-
-.section-header.collapsible:hover {
-    background: var(--bg-tertiary);
 }
 
 .section-title {
@@ -1186,22 +1155,6 @@ body.dark-mode .ws-tab.active {
     justify-content: space-between;
     gap: 16px;
     min-height: 32px;
-}
-
-.export-label {
-    font-size: 14px;
-    color: var(--text-primary);
-    font-weight: 500;
-    flex: 1;
-    white-space: nowrap;
-}
-
-
-.export-subgroup {
-    margin-top: -4px;
-    padding-left: 12px;
-    border-left: 2px solid var(--border-color);
-    margin-left: 4px;
 }
 
 
@@ -1826,15 +1779,6 @@ body.dark-mode .grid-overlay .grid-line {
     color: var(--text-primary);
 }
 
-/* 右侧面板 */
-.right-panel {
-    background: var(--bg-primary);
-    border-left: 1px solid var(--border-color);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-}
-
 .palette-section {
     flex: 1;
     display: flex;
@@ -2088,12 +2032,14 @@ body.dark-mode .grid-overlay .grid-line {
     justify-content: center;
     visibility: hidden;
     opacity: 0;
-    transition: all 0.3s ease;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.modal[style*="display: flex"] {
+.modal.active {
     visibility: visible;
     opacity: 1;
+    pointer-events: auto;
 }
 
 .modal-overlay {
@@ -2122,7 +2068,7 @@ body.dark-mode .grid-overlay .grid-line {
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.modal[style*="display: flex"] .modal-dialog {
+.modal.active .modal-dialog {
     transform: scale(1);
 }
 
@@ -2392,11 +2338,6 @@ body.dark-mode .grid-overlay .grid-line {
     border-color: var(--text-secondary);
 }
 
-.btn-analyze {
-    width: 100%;
-    margin-top: 16px;
-}
-
 .modal-toolbar-row {
     display: flex;
     align-items: center;
@@ -2440,9 +2381,6 @@ body.dark-mode .grid-overlay .grid-line {
     min-width: 80px;
 }
 
-.color-group {
-    margin-bottom: 32px;
-}
 .btn-tertiary {
     padding: 8px 10px;
     background: var(--bg-secondary);
@@ -2638,6 +2576,22 @@ body.dark-mode .grid-overlay .grid-line {
     transform: translateY(-4px); /* Only animate Y */
 }
 
+/* 面板遮罩层（由 JS 动态创建） */
+.panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 95;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.panel-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 /* 响应式设计 */
 @media (max-width: 1024px) {
     .main-container {
@@ -2652,21 +2606,6 @@ body.dark-mode .grid-overlay .grid-line {
 
     .main-container {
         grid-template-columns: 1fr;
-    }
-
-    .left-panel {
-        position: fixed;
-        left: -280px;
-        top: var(--toolbar-height);
-        height: calc(100vh - var(--toolbar-height));
-        width: var(--panel-width);
-        transition: left 0.3s ease;
-        z-index: 90;
-        box-shadow: 4px 0 10px rgba(0,0,0,0.1);
-    }
-
-    .left-panel.show {
-        left: 0;
     }
 }
 
@@ -2789,12 +2728,6 @@ body.dark-mode .grid-overlay .grid-line {
 
     .left-panel.show {
         transform: translateY(0);
-    }
-    
-    /* 遮罩层在移动端隐藏，以便实时预览画布 */
-    .panel-overlay.show {
-        opacity: 0;
-        pointer-events: none;
     }
 
     /* 增大点击区域 (48x48px) */
@@ -3180,7 +3113,7 @@ body.dark-mode .toolbar-select option {
 
 .dropdown-menu.show {
     display: flex;
-    animation: fadeIn 0.2s ease;
+    animation: fadeInDown 0.2s ease;
 }
 
 .dropdown-item {
@@ -3206,7 +3139,7 @@ body.dark-mode .toolbar-select option {
     font-weight: 500;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInDown {
     from { opacity: 0; transform: translateY(-5px); }
     to { opacity: 1; transform: translateY(0); }
 }

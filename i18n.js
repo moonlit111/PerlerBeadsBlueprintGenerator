@@ -9,6 +9,7 @@ const translations = {
         "tab_identify": "颜色识别",
         "toolbar_tools": "工具",
         "toolbar_theme": "切换主题",
+        "toolbar_mobile_panel": "工具面板",
         
         // 侧边栏标题
         "label_language": "选择语言",
@@ -142,6 +143,7 @@ const translations = {
         "tab_identify": "Identifier",
         "toolbar_tools": "Tools",
         "toolbar_theme": "Toggle Theme",
+        "toolbar_mobile_panel": "Tool Panel",
         
         "section_image_process": "Image Processing",
         "section_grid_settings": "Grid Settings",
@@ -270,7 +272,8 @@ const translations = {
         "tab_identify": "顏色識別",
         "toolbar_tools": "工具",
         "toolbar_theme": "切換主題",
-        
+        "toolbar_mobile_panel": "工具面板",
+
         "section_image_process": "圖片處理",
         "section_grid_settings": "網格設定",
         "section_view_process": "視圖與處理",
@@ -398,7 +401,8 @@ const translations = {
         "tab_identify": "顏色識別",
         "toolbar_tools": "工具",
         "toolbar_theme": "切換主題",
-        
+        "toolbar_mobile_panel": "工具面板",
+
         "section_image_process": "圖片處理",
         "section_grid_settings": "網格設定",
         "section_view_process": "視圖與處理",
@@ -526,6 +530,7 @@ const translations = {
         "tab_identify": "色識別",
         "toolbar_tools": "ツール",
         "toolbar_theme": "テーマ切替",
+        "toolbar_mobile_panel": "ツールパネル",
         
         "section_image_process": "画像処理",
         "section_grid_settings": "グリッド設定",
